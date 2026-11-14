@@ -41,6 +41,7 @@ sample_events*.json
 # Environment variables (contains secrets — never commit)
 .env
 .env.*
+!.env.example
 
 # IDE
 .vscode/

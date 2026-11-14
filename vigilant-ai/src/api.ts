@@ -75,6 +75,34 @@ export interface IncidentReport {
   evidence_clips: Array<{ clip_id: string; time_start: string; time_end: string; stage: string; score: number; caption: string }>;
   total_alerts: number;
   total_events: number;
+  evidence_hash?: string;
+  chain_of_custody?: {
+    sha256_evidence_hash: string;
+    verification_standard: string;
+    integrity_status: string;
+    forensic_watermark: string;
+    timestamp_utc: string;
+  };
+}
+
+export interface IntegrationChannel {
+  id: string;
+  name: string;
+  status: string;
+  type: string;
+  description: string;
+  configured: boolean;
+}
+
+export interface TelegramDispatchResponse {
+  status: 'ok' | 'simulated' | 'error';
+  delivered: boolean;
+  channel: string;
+  message: string;
+  message_id?: number;
+  preview_text?: string;
+  error?: string;
+  timestamp?: string;
 }
 
 export interface MemoryQueryResult {
@@ -297,4 +325,22 @@ export const api = {
     total_alerts: number; total_tracks: number;
     latest_video: VideoInfo | null;
   }>('/stats'),
+
+  integrationChannels: () =>
+    apiFetch<{ channels: IntegrationChannel[] }>('/integrations/channels'),
+
+  dispatchTelegram: (payload: {
+    bot_token?: string;
+    chat_id?: string;
+    video_id?: string;
+    video_name?: string;
+    alert_stage?: string;
+    alert_score?: number;
+    summary?: string;
+    custom_message?: string;
+  }) =>
+    apiFetch<TelegramDispatchResponse>('/integrations/telegram/dispatch', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };

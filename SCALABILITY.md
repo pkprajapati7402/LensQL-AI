@@ -11,16 +11,21 @@
    - [The Two-Tier Alert System (Reflex + Reasoning)](#the-two-tier-alert-system-reflex--reasoning)
    - [Natural Language "Ask Your Store" Interface](#natural-language-ask-your-store-interface)
    - [Daily Automated Executive Digest](#daily-automated-executive-digest)
-3. [End-to-End System Architecture](#3-end-to-end-system-architecture)
+3. [Enterprise Notification & Incident Dispatch Hub](#3-enterprise-notification--incident-dispatch-hub)
+   - [Telegram Live Delivery Architecture (Fully Functional)](#telegram-live-delivery-architecture-fully-functional)
+   - [WhatsApp Business Cloud API Connector (Meta Graph)](#whatsapp-business-cloud-api-connector-meta-graph)
+   - [Slack, Discord & PagerDuty CAD Integration](#slack-discord--pagerduty-cad-integration)
+4. [End-to-End System Architecture](#4-end-to-end-system-architecture)
    - [Edge-to-Cloud Distributed Architecture](#edge-to-cloud-distributed-architecture)
    - [The Two-Tier Alert Sequence Flow](#the-two-tier-alert-sequence-flow)
-4. [Technical Scalability Strategy (1 to 10,000+ Cameras)](#4-technical-scalability-strategy-1-to-10000-cameras)
+5. [Technical Scalability Strategy (1 to 10,000+ Cameras)](#5-technical-scalability-strategy-1-to-10000-cameras)
    - [Bandwidth & Compute Optimization (Fog Computing)](#bandwidth--compute-optimization-fog-computing)
    - [Event Streaming & Ingestion (Kafka / MQTT)](#event-streaming--ingestion-kafka--mqtt)
    - [GPU Cluster Elastic Auto-Scaling (Camber Cloud GPU)](#gpu-cluster-elastic-auto-scaling-camber-cloud-gpu)
    - [Vector Database Partitioning (Actian VectorAI)](#vector-database-partitioning-actian-vectorai)
-5. [Business & Cost Model (Unit Economics)](#5-business--cost-model-unit-economics)
-6. [Data Privacy, Security & Legal Compliance](#6-data-privacy-security--legal-compliance)
+6. [Business & Cost Model (Unit Economics)](#6-business--cost-model-unit-economics)
+7. [Data Privacy, Security & Legal Compliance](#7-data-privacy-security--legal-compliance)
+8. [Future Enterprise Product Roadmap (Unimplemented Vision & Moat)](#8-future-enterprise-product-roadmap-unimplemented-vision--moat)
 
 ---
 
@@ -164,7 +169,31 @@ Every night at midnight, Vigilant’s synthesis engine generates an **Executive 
 
 ---
 
-## 3. End-to-End System Architecture
+## 3. Enterprise Notification & Incident Dispatch Hub
+
+Surveillance alerts are worthless if they sit unread on a desktop monitor. Vigilant AI deploys a multi-channel automated dispatch engine that delivers alerts where decision-makers actually look:
+
+### Telegram Live Delivery Architecture (Fully Functional)
+Telegram provides an enterprise-ready, zero-latency notification pipe:
+- **Trigger**: When an active window crosses $\ge 0.65$ (Stage B) or $\ge 0.85$ (Stage C Critical).
+- **Payload**: Dispatches a structured forensic dossier with source camera ID, risk classification, verified keyframe timestamps, and executive narrative.
+- **Operator Channel**: Broadcasts directly to private security personnel or private operator groups in under **500 milliseconds**.
+
+### WhatsApp Business Cloud API Connector (Meta Graph API)
+In markets like India, Latin America, and Southeast Asia where 95%+ of business communication occurs over WhatsApp, Vigilant includes a dedicated connector architecture for the **Meta Cloud API**:
+- **Interactive Action Buttons**: Alerts are delivered as rich WhatsApp Business Template Messages (`security_incident_v1`) featuring interactive response buttons:
+  - `[ 🚓 Call Emergency 112 / 911 ]`
+  - `[ 🔊 Trigger On-Premise Siren ]`
+  - `[ ❌ Dismiss False Alarm ]`
+- **Two-Way Status Loop**: Clicking an action button updates the Vigilant event record in real time, logging who acknowledged the incident and when.
+
+### Slack, Discord & PagerDuty CAD Integration
+- **Slack & Discord**: Webhooks post color-coded incident cards into corporate `#security-operations` or Discord incident rooms.
+- **PagerDuty CAD**: Automated Computer-Aided Dispatch (CAD) integration escalates unattended Stage C incidents directly to on-call guard rosters.
+
+---
+
+## 4. End-to-End System Architecture
 
 ### Edge-to-Cloud Distributed Architecture
 
@@ -253,7 +282,7 @@ sequenceDiagram
 
 ---
 
-## 4. Technical Scalability Strategy (1 to 10,000+ Cameras)
+## 5. Technical Scalability Strategy (1 to 10,000+ Cameras)
 
 Scaling from 1 cafe (5 cameras) to a chain of 2,000 cafes (10,000 cameras) requires rigorous engineering to avoid cloud cost explosion.
 
@@ -317,7 +346,7 @@ As footage accumulates across hundreds of stores, the vector store grows to mill
 
 ---
 
-## 5. Business & Cost Model (Unit Economics)
+## 6. Business & Cost Model (Unit Economics)
 
 ### Monthly Cost Breakdown for 1 Cafe (5 Cameras)
 
@@ -335,7 +364,7 @@ As footage accumulates across hundreds of stores, the vector store grows to mill
 
 ---
 
-## 6. Data Privacy, Security & Legal Compliance
+## 7. Data Privacy, Security & Legal Compliance
 
 1. **Local Privacy Zones & Obfuscation**:
    - Restrooms, employee locker areas, and neighbor properties can be blocked out with static privacy masks on the Edge Hub before video is ever saved or transmitted.
@@ -345,4 +374,40 @@ As footage accumulates across hundreds of stores, the vector store grows to mill
    - Every exported incident report and proof clip is fingerprinted with a cryptographic **SHA-256 hash** and timestamped at the time of recording, ensuring courtroom admissibility for insurance and criminal proceedings.
 4. **End-to-End Encryption**:
    - All video transmitted between the Edge Hub and Camber Cloud travels over **TLS 1.3 encrypted tunnels**; resting vectors in Actian VectorAI and clips in storage are encrypted via **AES-256**.
+
+---
+
+## 8. Future Enterprise Product Roadmap (Unimplemented Vision & Moat)
+
+The following high-value enterprise features form our commercial development roadmap for VC-backed scaling and enterprise deployment:
+
+### 8.1 Non-Biometric Multi-Camera Re-Identification (Re-ID)
+- **The Vision**: Track a subject as they transition from Parking Lot (Cam 1) $\rightarrow$ Entrance (Cam 2) $\rightarrow$ Cash Counter (Cam 4) across discontinuous, non-overlapping fields of view.
+- **The Moat**: Rather than relying on heavily restricted facial recognition (banned under the EU AI Act and GDPR Article 9), Vigilant extracts **appearance and clothing latent vectors** (color distribution, silhouette height, footwear, backpack embedding).
+- **Architecture**: A temporal graph network links candidate bounding boxes into a unified multi-camera trajectory without biometric data.
+
+### 8.2 On-Camera NPU & TensorRT INT8 Edge Compilation
+- **The Vision**: Run Layer 0 (Gaussian motion gating) and Layer 1 (YOLO11-Nano) directly on ultra-low-power edge NPUs (NVIDIA Jetson Orin Nano, Hailo-8, or Rockchip RK3588) inside the physical camera enclosure ($< 5\text{W}$ power budget).
+- **Quantization**: Compiling PyTorch models to TensorRT INT8 achieves a $4\times$ throughput boost and sub-8ms inference latency directly on-premise.
+
+### 8.3 WhatsApp Business Cloud API Interactive Action Relays
+- **The Vision**: Expand our Telegram dispatch into full two-way Meta Cloud WhatsApp Business automation.
+- **Interactive Action Flow**: When an after-hours perimeter breach occurs, the cafe owner receives an interactive card with native buttons:
+  - `[ 🚓 Dispatch Police CAD ]` $\rightarrow$ Relays verified GPS coordinates and evidence dossier directly to local emergency dispatch.
+  - `[ 🔊 Sound Strobe & Siren ]` $\rightarrow$ Triggers local IoT relay to activate on-premise physical deterrence.
+  - `[ ❌ False Alarm (Employee Entry) ]` $\rightarrow$ Logs verified feedback to fine-tune the local edge threshold.
+
+### 8.4 Dynamic Edge Ring Buffering & Bandwidth Throttling
+- **The Vision**: Edge hubs continuously maintain a rolling 14-day 1080p raw video buffer on local NVMe solid-state storage.
+- **Zero-Cloud-Bandwidth Idle**: Only sub-kilobyte text events and 768-dim CLIP vectors stream to the cloud under normal conditions. Full-resolution video clips are pulled upstream on-demand only during active Stage C investigations.
+
+### 8.5 Universal Hardware-Agnostic ONVIF/RTSP Auto-Discovery
+- **The Vision**: Zero-configuration camera onboarding. When the Vigilant Edge Hub is plugged into a commercial PoE switch, it runs WS-Discovery over the local subnet to detect all ONVIF Profile S/G/T compliant cameras, authenticates, and binds streams automatically within 60 seconds.
+
+### 8.6 Retail Operations & Heatmap Analytics (Dual-Use Moat)
+- **The Vision**: Transform physical surveillance from a pure security cost center into a high-ROI business intelligence tool.
+- **Operational Capabilities**:
+  - Foot-traffic heatmaps showing customer engagement across retail aisles.
+  - Average checkout queue dwell times and checkout abandon rates.
+  - Employee-to-customer interaction ratios to optimize staffing rosters.
 

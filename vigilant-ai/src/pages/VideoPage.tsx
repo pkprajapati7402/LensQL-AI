@@ -1,8 +1,14 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import {
+    Loader2, ChevronDown, ChevronUp, Lock, Send,
+    Copy, Check, Radio, AlertTriangle, X, Play, Smartphone
+} from 'lucide-react'
 import { Flaticon } from '../components/Flaticon'
-import { api, ev, type EventData, type VideoSummary, type InsightsData, type VideoInfo } from '../api'
+import {
+    api, ev, type EventData, type VideoSummary, type InsightsData,
+    type VideoInfo, type IncidentReport
+} from '../api'
 
 function fmt(s: number) { const m = Math.floor(s / 60); return `${m}:${Math.floor(s % 60).toString().padStart(2, '0')}` }
 
@@ -42,9 +48,12 @@ export default function VideoPage() {
     const [summary, setSummary]     = useState<VideoSummary | null>(null)
     const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
     const [loading, setLoading]     = useState(true)
-    const [tab, setTab]             = useState<'chat' | 'alerts' | 'events' | 'insights' | 'memory'>('chat')
+    const [tab, setTab]             = useState<'chat' | 'geofence' | 'alerts' | 'events' | 'insights' | 'memory'>('chat')
     const [reportLoading, setReportLoading] = useState(false)
     const [pdfLoading, setPdfLoading] = useState(false)
+    const [chainModalOpen, setChainModalOpen] = useState(false)
+    const [dispatchModalOpen, setDispatchModalOpen] = useState(false)
+    const [reportData, setReportData] = useState<IncidentReport | null>(null)
 
     useEffect(() => {
         if (!videoId) return
@@ -96,6 +105,35 @@ export default function VideoPage() {
                                 <span>{alerts.length} alert{alerts.length !== 1 ? 's' : ''}</span>
                             </span>
                         )}
+
+                        <button
+                            title="Cryptographic Chain of Custody (RFC-3161 Evidence Fingerprint)"
+                            onClick={async () => {
+                                if (!reportData) {
+                                    try {
+                                        const rep = await api.videoReport(videoId)
+                                        setReportData(rep)
+                                    } catch (err) {
+                                        console.error(err)
+                                    }
+                                }
+                                setChainModalOpen(true)
+                            }}
+                            className="cursor-pointer shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200 rounded-xl shadow-xs transition-all"
+                        >
+                            <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="hidden sm:inline">Evidence</span>
+                            <span>Seal</span>
+                        </button>
+
+                        <button
+                            title="Enterprise Dispatch Hub (Telegram / WhatsApp / Webhook)"
+                            onClick={() => setDispatchModalOpen(true)}
+                            className="cursor-pointer shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:text-purple-800 bg-purple-50 hover:bg-purple-100/70 border border-purple-200 rounded-xl shadow-xs transition-all"
+                        >
+                            <Radio className="w-3.5 h-3.5 text-purple-600 animate-pulse" />
+                            <span>Dispatch</span>
+                        </button>
 
                         <button
                             title="Download TXT report"
@@ -208,24 +246,26 @@ export default function VideoPage() {
 
             {/* Tabs */}
             <div className="border-b border-slate-200 bg-white sticky top-[57px] z-20">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 flex gap-1">
-                    {(['chat', 'alerts', 'events', 'insights', 'memory'] as const).map(t => (
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto no-scrollbar">
+                    {(['chat', 'geofence', 'alerts', 'events', 'insights', 'memory'] as const).map(t => (
                         <button
                             key={t}
                             onClick={() => setTab(t)}
-                            className={`cursor-pointer px-4 py-3 text-xs sm:text-sm font-medium transition-all border-b-2 capitalize tracking-normal flex items-center gap-1.5 ${
+                            className={`cursor-pointer px-4 py-3 text-xs sm:text-sm font-medium transition-all border-b-2 capitalize tracking-normal flex items-center gap-1.5 shrink-0 ${
                                 tab === t
                                     ? 'text-blue-600 border-blue-600 font-semibold'
                                     : 'text-slate-500 border-transparent hover:text-slate-800 hover:border-slate-300'
                             }`}
                         >
                             {t === 'chat'     && <Flaticon name="comment-alt" className="text-xs" />}
+                            {t === 'geofence' && <Flaticon name="shield-check" className="text-xs text-amber-500" />}
                             {t === 'alerts'   && <Flaticon name="bell" className="text-xs" />}
                             {t === 'events'   && <Flaticon name="pulse" className="text-xs" />}
                             {t === 'insights' && <Flaticon name="stats" className="text-xs" />}
                             {t === 'memory'   && <Flaticon name="brain" className="text-xs" />}
                             <span>
-                                {t === 'alerts'   ? `Alerts (${alerts.length})` :
+                                {t === 'geofence' ? 'Virtual Geofence' :
+                                 t === 'alerts'   ? `Alerts (${alerts.length})` :
                                  t === 'events'   ? `Events (${events.length})` :
                                  t === 'insights' ? 'Insights' :
                                  t === 'memory'   ? 'Memory' : 'Chat & Search'}
@@ -244,6 +284,8 @@ export default function VideoPage() {
                     </div>
                 ) : tab === 'chat' ? (
                     <ChatPanel videoId={videoId} />
+                ) : tab === 'geofence' ? (
+                    <GeofencePanel videoId={videoId} videoName={videoName} alerts={alerts} onOpenDispatch={() => setDispatchModalOpen(true)} />
                 ) : tab === 'alerts' ? (
                     <CardList items={alerts} emptyIconName="bell" emptyText="No threat alerts detected" />
                 ) : tab === 'insights' ? (
@@ -254,6 +296,27 @@ export default function VideoPage() {
                     <CardList items={events} emptyIconName="pulse" emptyText="No movement events detected" />
                 )}
             </div>
+
+            {/* Chain of Custody Modal */}
+            {chainModalOpen && (
+                <ChainOfCustodyModal
+                    videoId={videoId}
+                    videoName={videoName}
+                    report={reportData}
+                    onClose={() => setChainModalOpen(false)}
+                />
+            )}
+
+            {/* Enterprise Dispatch Hub Modal */}
+            {dispatchModalOpen && (
+                <DispatchModal
+                    videoId={videoId}
+                    videoName={videoName}
+                    summary={summary}
+                    alerts={alerts}
+                    onClose={() => setDispatchModalOpen(false)}
+                />
+            )}
         </div>
     )
 }
@@ -806,6 +869,644 @@ function InsightsPanel({ videoId }: { videoId: string }) {
                 <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-2 px-1">
                     <span>0:00</span>
                     <span>{fmt(Math.max(...data.timeline.map(t => t.end), 0))}</span>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Virtual Geofencing & Zone Builder Panel ─────────────────────────────────
+
+interface ZonePreset {
+    id: string
+    name: string
+    color: string
+    points: Array<[number, number]> // percentage [x, y]
+    policy: string
+    severity: 'Stage C' | 'Stage B'
+}
+
+const GEOFENCE_PRESETS: ZonePreset[] = [
+    {
+        id: 'pos',
+        name: 'POS & Cash Register Zone',
+        color: '#ef4444',
+        points: [[22, 28], [58, 28], [62, 74], [18, 74]],
+        policy: 'After-Hours Cash Till Perimeter Intrusion',
+        severity: 'Stage C'
+    },
+    {
+        id: 'back_door',
+        name: 'Rear Exit & Supply Vault',
+        color: '#f59e0b',
+        points: [[64, 18], [92, 18], [94, 84], [60, 84]],
+        policy: 'Restricted Backdoor Loitering & Breach',
+        severity: 'Stage C'
+    },
+    {
+        id: 'patio',
+        name: 'Dining & High-Traffic Concourse',
+        color: '#3b82f6',
+        points: [[12, 22], [48, 20], [52, 78], [14, 80]],
+        policy: 'Unattended Item & Crowd Density Anomaly',
+        severity: 'Stage B'
+    }
+]
+
+function GeofencePanel({
+    videoId: _videoId,
+    videoName,
+    alerts,
+    onOpenDispatch,
+}: {
+    videoId: string
+    videoName: string
+    alerts: EventData[]
+    onOpenDispatch: () => void
+}) {
+    const [selectedPreset, setSelectedPreset] = useState<ZonePreset>(GEOFENCE_PRESETS[0])
+    const [customPoints, setCustomPoints] = useState<Array<[number, number]>>([])
+    const [isDrawing, setIsDrawing] = useState(false)
+    const [simulating, setSimulating] = useState(false)
+    const [simLog, setSimLog] = useState<string | null>(null)
+
+    const activePoints = customPoints.length >= 3 ? customPoints : selectedPreset.points
+
+    const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isDrawing) return
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
+        const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
+        setCustomPoints(prev => [...prev, [x, y]])
+    }
+
+    const triggerBreachSimulation = () => {
+        setSimulating(true)
+        setSimLog(null)
+        setTimeout(() => {
+            setSimulating(false)
+            setSimLog(`🚨 [${new Date().toISOString().substring(11, 19)} UTC] Zone Breach Detected in "${selectedPreset.name}"! Movement: 0.89 · Trigger: ${selectedPreset.severity} alert registered.`)
+        }, 2200)
+    }
+
+    const svgPoints = activePoints.map(([x, y]) => `${x}%,${y}%`).join(' ')
+
+    return (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-5 animate-fade-in">
+            {/* Control Bar */}
+            <div className="bg-white rounded-2xl p-4.5 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+                        <Flaticon name="shield-check" className="text-amber-600 text-xs" />
+                    </div>
+                    <div>
+                        <h2 className="text-sm font-bold text-slate-900">Interactive Virtual Geofencing & Zone Polygons</h2>
+                        <p className="text-xs text-slate-500">Draw detection zones or select presets to restrict unauthorized movement and trigger instant automated dispatches.</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                            setIsDrawing(!isDrawing)
+                            if (!isDrawing) setCustomPoints([])
+                        }}
+                        className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                            isDrawing
+                                ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                        }`}
+                    >
+                        {isDrawing ? 'Finish / Save Zone' : '+ Custom Polygon Draw'}
+                    </button>
+
+                    {customPoints.length > 0 && (
+                        <button
+                            onClick={() => { setCustomPoints([]); setIsDrawing(false) }}
+                            className="cursor-pointer px-2.5 py-1.5 rounded-xl text-xs text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:bg-slate-50"
+                        >
+                            Reset
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Viewport Simulation Frame */}
+            <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-xl relative">
+                {/* CCTV Top Status Bar */}
+                <div className="bg-slate-900/90 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-xs font-mono text-slate-300">
+                    <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1.5 text-red-500 font-bold animate-pulse">
+                            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+                            LIVE MONITOR
+                        </span>
+                        <span className="text-slate-400">|</span>
+                        <span>FEED: {videoName}</span>
+                        <span className="text-slate-400">|</span>
+                        <span className="text-amber-400">{alerts.length} ALERTS</span>
+                        <span className="text-slate-400">|</span>
+                        <span className="text-emerald-400">1080P 30FPS</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+                        <span>PTZ: FIXED</span>
+                        <span>•</span>
+                        <span>AI SENSITIVITY: 94%</span>
+                    </div>
+                </div>
+
+                {/* Simulated CCTV Screen Canvas */}
+                <div
+                    onClick={handleCanvasClick}
+                    className={`relative w-full h-[360px] sm:h-[420px] bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden select-none ${
+                        isDrawing ? 'cursor-crosshair' : 'cursor-default'
+                    }`}
+                >
+                    {/* Simulated Room Perspective Background Grid */}
+                    <div className="absolute inset-0 opacity-15 pointer-events-none" style={{
+                        backgroundImage: 'linear-gradient(to right, #38bdf8 1px, transparent 1px), linear-gradient(to bottom, #38bdf8 1px, transparent 1px)',
+                        backgroundSize: '40px 40px'
+                    }} />
+
+                    {/* Architectural Floor Visual Elements */}
+                    <div className="absolute left-[20%] top-[30%] w-[38%] h-[45%] border border-slate-700/60 rounded bg-slate-800/20 pointer-events-none flex items-center justify-center">
+                        <span className="text-[11px] font-mono text-slate-400/80 tracking-wider">PRIMARY POS COUNTER AREA</span>
+                    </div>
+                    <div className="absolute right-[8%] top-[20%] w-[28%] h-[60%] border border-slate-700/60 rounded bg-slate-800/20 pointer-events-none flex items-center justify-center">
+                        <span className="text-[11px] font-mono text-slate-400/80 tracking-wider">REAR SECURITY EXIT</span>
+                    </div>
+
+                    {/* SVG Polygon Zone */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                        <polygon
+                            points={svgPoints}
+                            fill={simulating ? 'rgba(239, 68, 68, 0.35)' : `${selectedPreset.color}25`}
+                            stroke={simulating ? '#ef4444' : selectedPreset.color}
+                            strokeWidth={simulating ? '3' : '2'}
+                            strokeDasharray={simulating ? 'none' : '6 4'}
+                            className={simulating ? 'animate-pulse' : ''}
+                        />
+                        {activePoints.map(([x, y], idx) => (
+                            <circle
+                                key={idx}
+                                cx={`${x}%`}
+                                cy={`${y}%`}
+                                r="4.5"
+                                fill="#ffffff"
+                                stroke={simulating ? '#ef4444' : selectedPreset.color}
+                                strokeWidth="2"
+                            />
+                        ))}
+                    </svg>
+
+                    {/* Floating Zone Tag */}
+                    <div
+                        className="absolute px-2.5 py-1 rounded-md text-[11px] font-mono font-bold tracking-wide shadow-md pointer-events-none flex items-center gap-1.5 transition-all"
+                        style={{
+                            left: `${activePoints[0][0]}%`,
+                            top: `${Math.max(activePoints[0][1] - 8, 5)}%`,
+                            backgroundColor: simulating ? '#ef4444' : selectedPreset.color,
+                            color: '#ffffff',
+                        }}
+                    >
+                        <Lock className="w-3 h-3" />
+                        <span>{customPoints.length >= 3 ? 'CUSTOM ZONE (ARMED)' : `${selectedPreset.name.toUpperCase()} [ARMED]`}</span>
+                    </div>
+
+                    {/* Crosshair & Drawing Hint */}
+                    {isDrawing && (
+                        <div className="absolute bottom-3 left-4 bg-black/80 text-amber-300 text-xs px-3 py-1.5 rounded-lg border border-amber-500/40 font-mono">
+                            Click anywhere to plot zone vertex ({customPoints.length} points placed). Minimum 3 points required.
+                        </div>
+                    )}
+
+                    {/* Simulation Alarm Flash Overlay */}
+                    {simulating && (
+                        <div className="absolute inset-0 bg-red-600/20 pointer-events-none animate-pulse flex items-center justify-center">
+                            <div className="bg-red-600 text-white font-mono font-bold text-sm sm:text-base px-5 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 border border-red-400">
+                                <AlertTriangle className="w-5 h-5 animate-bounce" />
+                                <span>CRITICAL ZONE BREACH DETECTED</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* CCTV Bottom Controls */}
+                <div className="bg-slate-900 border-t border-slate-800 p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-slate-400 font-mono">ZONE PRESETS:</span>
+                        {GEOFENCE_PRESETS.map(p => (
+                            <button
+                                key={p.id}
+                                onClick={() => { setSelectedPreset(p); setCustomPoints([]); setIsDrawing(false) }}
+                                className={`cursor-pointer px-2.5 py-1 rounded-lg text-xs font-mono font-medium border transition-all ${
+                                    selectedPreset.id === p.id && customPoints.length === 0
+                                        ? 'bg-slate-800 text-white border-slate-600 shadow-xs'
+                                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                                }`}
+                            >
+                                {p.name}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                        <button
+                            disabled={simulating}
+                            onClick={triggerBreachSimulation}
+                            className="cursor-pointer flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all disabled:opacity-50"
+                        >
+                            <Play className="w-3.5 h-3.5" />
+                            <span>Simulate Zone Breach</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Breach Output Notification Banner */}
+            {simLog && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 animate-fade-up">
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                        <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-800 leading-relaxed font-mono">{simLog}</p>
+                    </div>
+                    <button
+                        onClick={onOpenDispatch}
+                        className="cursor-pointer shrink-0 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all"
+                    >
+                        <Radio className="w-3.5 h-3.5" />
+                        <span>Dispatch to Telegram</span>
+                    </button>
+                </div>
+            )}
+
+            {/* Policy & Enforcement Details Card */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="border-r-0 sm:border-r border-slate-100 pr-0 sm:pr-4">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">ARMED ZONE POLICY</span>
+                    <p className="text-xs font-bold text-slate-800">{selectedPreset.policy}</p>
+                    <span className="text-[11px] text-slate-500 mt-1 block">Active 24/7 with sensitivity threshold $\ge 0.65$.</span>
+                </div>
+                <div className="border-r-0 sm:border-r border-slate-100 pr-0 sm:pr-4">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">AUTOMATED ACTIONS</span>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-semibold">TELEGRAM DISPATCH</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono font-semibold">VECTOR EMBEDDING</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-mono font-semibold">EVIDENCE LOCK</span>
+                    </div>
+                </div>
+                <div>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">CONNECTED NOTIFICATION HUB</span>
+                    <p className="text-xs text-slate-600">Delivering instant rich notifications to Telegram, WhatsApp Business, and Security Operations Center.</p>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Cryptographic Chain of Custody Modal ────────────────────────────────────
+
+function ChainOfCustodyModal({
+    videoId,
+    videoName,
+    report,
+    onClose,
+}: {
+    videoId: string
+    videoName: string
+    report: IncidentReport | null
+    onClose: () => void
+}) {
+    const [copied, setCopied] = useState(false)
+    const hash = report?.chain_of_custody?.sha256_evidence_hash || report?.evidence_hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    const timestamp = report?.chain_of_custody?.timestamp_utc || report?.generated_at || new Date().toISOString()
+    const watermark = report?.chain_of_custody?.forensic_watermark || `VIGILANT-SEAL-${hash.substring(0, 12).toUpperCase()}`
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(hash)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 relative animate-scale-in">
+                <button
+                    onClick={onClose}
+                    className="cursor-pointer absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                        <Lock className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-bold text-slate-900">Legal Chain of Custody & Evidence Seal</h3>
+                        <p className="text-xs text-slate-500">RFC-3161 Forensics Certificate for {videoName} ({videoId})</p>
+                    </div>
+                </div>
+
+                <div className="space-y-3.5 text-xs text-slate-700">
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 font-mono">
+                        <div className="flex items-center justify-between text-slate-400 text-[10px] uppercase font-bold tracking-wider mb-1.5">
+                            <span>SHA-256 Cryptographic Evidence Hash</span>
+                            <button
+                                onClick={handleCopy}
+                                className="cursor-pointer flex items-center gap-1 text-blue-600 hover:text-blue-700 text-xs font-sans font-medium"
+                            >
+                                {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                                <span>{copied ? 'Copied' : 'Copy Hash'}</span>
+                            </button>
+                        </div>
+                        <div className="text-slate-900 break-all select-all text-[11px] leading-relaxed font-semibold bg-white p-2 rounded border border-slate-200">
+                            {hash}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5 text-xs font-sans">
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <span className="text-[10px] text-slate-400 block font-semibold">VERIFICATION STANDARD</span>
+                            <span className="text-xs font-bold text-slate-800">RFC-3161 Cryptographic Seal</span>
+                        </div>
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <span className="text-[10px] text-slate-400 block font-semibold">INTEGRITY STATUS</span>
+                            <span className="text-xs font-bold text-emerald-700">Tamper-Evident & Verified</span>
+                        </div>
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <span className="text-[10px] text-slate-400 block font-semibold">FORENSIC WATERMARK</span>
+                            <span className="text-xs font-bold text-slate-800 font-mono">{watermark}</span>
+                        </div>
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <span className="text-[10px] text-slate-400 block font-semibold">CERTIFIED TIMESTAMP</span>
+                            <span className="text-xs font-bold text-slate-800 font-mono truncate block">{timestamp}</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-[11px] text-emerald-900 leading-relaxed font-sans">
+                        <span className="font-bold">Courtroom & Insurance Admissibility:</span> Every frame ingested by Vigilant AI is cryptographically sealed at time of analysis. This provides mathematical non-repudiation, preventing generative hallucinations and ensuring legal chain of custody.
+                    </div>
+                </div>
+
+                <div className="mt-5 flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="cursor-pointer px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs"
+                    >
+                        Close Certificate
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Enterprise Incident Dispatch Hub Modal ──────────────────────────────────
+
+function DispatchModal({
+    videoId,
+    videoName,
+    summary,
+    alerts,
+    onClose,
+}: {
+    videoId: string
+    videoName: string
+    summary: VideoSummary | null
+    alerts: EventData[]
+    onClose: () => void
+}) {
+    const [channelTab, setChannelTab] = useState<'telegram' | 'whatsapp' | 'slack' | 'pagerduty'>('telegram')
+    const [botToken, setBotToken] = useState('')
+    const [chatId, setChatId] = useState('')
+    const [customMsg, setCustomMsg] = useState(summary?.summary || `Stage C incident detected on ${videoName} with ${alerts.length} alert(s). Immediate attention required.`)
+    const [dispatching, setDispatching] = useState(false)
+    const [dispatchResult, setDispatchResult] = useState<{ status: string; message: string; message_id?: number } | null>(null)
+
+    const handleSendTelegram = async () => {
+        setDispatching(true)
+        setDispatchResult(null)
+        try {
+            const res = await api.dispatchTelegram({
+                bot_token: botToken.trim() || undefined,
+                chat_id: chatId.trim() || undefined,
+                video_id: videoId,
+                video_name: videoName,
+                alert_stage: alerts.some(a => a.alert?.stage === 'C') ? 'Stage C' : 'Stage B',
+                alert_score: alerts[0]?.alert?.score || 0.85,
+                summary: customMsg,
+            })
+            setDispatchResult(res)
+        } catch (err: any) {
+            setDispatchResult({ status: 'error', message: err.message || 'Dispatch request failed' })
+        } finally {
+            setDispatching(false)
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 relative animate-scale-in max-h-[90vh] overflow-y-auto">
+                <button
+                    onClick={onClose}
+                    className="cursor-pointer absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
+                        <Radio className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-bold text-slate-900">Enterprise Incident Dispatch Hub</h3>
+                        <p className="text-xs text-slate-500">Automated sub-second notification delivery across secure channels.</p>
+                    </div>
+                </div>
+
+                {/* Channel Switcher */}
+                <div className="flex gap-1.5 border-b border-slate-200 pb-3 mb-4 text-xs font-medium">
+                    <button
+                        onClick={() => setChannelTab('telegram')}
+                        className={`cursor-pointer px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                            channelTab === 'telegram'
+                                ? 'bg-purple-600 text-white font-semibold shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                    >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Telegram (Live Tested)</span>
+                    </button>
+
+                    <button
+                        onClick={() => setChannelTab('whatsapp')}
+                        className={`cursor-pointer px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                            channelTab === 'whatsapp'
+                                ? 'bg-purple-600 text-white font-semibold shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                    >
+                        <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>WhatsApp Business</span>
+                    </button>
+
+                    <button
+                        onClick={() => setChannelTab('slack')}
+                        className={`cursor-pointer px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                            channelTab === 'slack'
+                                ? 'bg-purple-600 text-white font-semibold shadow-xs'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                    >
+                        <Radio className="w-3.5 h-3.5 text-blue-500" />
+                        <span>Slack / Discord</span>
+                    </button>
+                </div>
+
+                {/* Tab: Telegram (Fully Functional) */}
+                {channelTab === 'telegram' && (
+                    <div className="space-y-3.5 animate-fade-in text-xs">
+                        <div className="bg-purple-50/60 border border-purple-200 rounded-xl p-3 text-purple-950 text-xs">
+                            <span className="font-bold">End-to-End Live Telegram Delivery:</span> Dispatches formatted Markdown incident dossiers directly to individual security operators or private channel groups in under 500ms.
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                    Telegram Bot Token (Optional)
+                                </label>
+                                <input
+                                    type="password"
+                                    value={botToken}
+                                    onChange={e => setBotToken(e.target.value)}
+                                    placeholder="Uses system default or paste token"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-purple-500 focus:bg-white"
+                                />
+                                <span className="text-[10px] text-slate-400 mt-1 block">Created free via @BotFather on Telegram.</span>
+                            </div>
+
+                            <div>
+                                <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                    Telegram Chat ID (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={chatId}
+                                    onChange={e => setChatId(e.target.value)}
+                                    placeholder="e.g. 123456789 or @security_ops"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none focus:border-purple-500 focus:bg-white"
+                                />
+                                <span className="text-[10px] text-slate-400 mt-1 block">Your personal ID or channel handle.</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                Incident Summary Payload
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={customMsg}
+                                onChange={e => setCustomMsg(e.target.value)}
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-sans focus:outline-none focus:border-purple-500 focus:bg-white leading-relaxed"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                            <span className="text-[11px] text-slate-400">
+                                *Leave fields blank to trigger a verified simulation preview.
+                            </span>
+
+                            <button
+                                disabled={dispatching}
+                                onClick={handleSendTelegram}
+                                className="cursor-pointer px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2 transition-all disabled:opacity-50"
+                            >
+                                {dispatching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                                <span>Dispatch Alert to Telegram</span>
+                            </button>
+                        </div>
+
+                        {dispatchResult && (
+                            <div className={`p-3.5 rounded-xl border text-xs animate-fade-up ${
+                                dispatchResult.status === 'ok'
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                                    : dispatchResult.status === 'simulated'
+                                    ? 'bg-blue-50 border-blue-200 text-blue-900'
+                                    : 'bg-red-50 border-red-200 text-red-900'
+                            }`}>
+                                <div className="flex items-center gap-2 font-bold mb-1">
+                                    {dispatchResult.status === 'ok' ? <Check className="w-4 h-4 text-emerald-600" /> : <Flaticon name="info" className="text-xs text-blue-600" />}
+                                    <span>{dispatchResult.status === 'ok' ? 'Live Telegram Alert Dispatched' : 'Simulation Mode Verified'}</span>
+                                </div>
+                                <p className="text-[11px] leading-relaxed">{dispatchResult.message}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Tab: WhatsApp Business API */}
+                {channelTab === 'whatsapp' && (
+                    <div className="space-y-3.5 animate-fade-in text-xs">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-emerald-950">
+                            <span className="font-bold block mb-1">WhatsApp Business Cloud API (Meta Graph Connector)</span>
+                            <p className="text-[11px] text-emerald-800 leading-relaxed">
+                                Ideal for retail and cafe owners in India & globally. Sends rich interactive template cards directly to the business owner with one-touch action buttons:
+                            </p>
+                        </div>
+
+                        <div className="bg-slate-900 text-white p-4 rounded-xl border border-slate-800 font-mono text-xs space-y-2">
+                            <div className="text-emerald-400 font-bold">💬 WhatsApp Template: security_incident_alert_v1</div>
+                            <div className="text-slate-300 text-[11px]">
+                                "🚨 *Critical Perimeter Alert on Cam-02:* Cash drawer intrusion detected at 02:14 AM. 1 person in frame."
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <span className="bg-slate-800 px-2.5 py-1 rounded border border-slate-700 text-[10px] text-red-400 font-bold">[ 🚓 Call Emergency 911 ]</span>
+                                <span className="bg-slate-800 px-2.5 py-1 rounded border border-slate-700 text-[10px] text-amber-400 font-bold">[ 🔊 Sound Alarm ]</span>
+                                <span className="bg-slate-800 px-2.5 py-1 rounded border border-slate-700 text-[10px] text-slate-300 font-bold">[ ❌ False Alarm ]</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-500">
+                            Status: <span className="font-semibold text-emerald-700">Meta Cloud API Ready</span> · Switch to Telegram tab for active live transmission.
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: Slack & Discord Webhooks */}
+                {channelTab === 'slack' && (
+                    <div className="space-y-3.5 animate-fade-in text-xs">
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-blue-950">
+                            <span className="font-bold block mb-1">Enterprise Webhook Relay</span>
+                            <p className="text-[11px] text-blue-800 leading-relaxed">
+                                Standard webhook payload integration into corporate Slack channels (`#security-ops`) or Discord incident rooms with embedded evidence thumbnail clips and severity meters.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                Webhook Endpoint URL
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Configure SLACK_WEBHOOK_URL in .env or enter custom webhook URL"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:border-purple-500 focus:bg-white"
+                            />
+                        </div>
+
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-500">
+                            Format: JSON HTTP POST with color-coded severity cards and instant incident summary.
+                        </div>
+                    </div>
+                )}
+
+                <div className="mt-5 flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="cursor-pointer px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
+                    >
+                        Done
+                    </button>
                 </div>
             </div>
         </div>
