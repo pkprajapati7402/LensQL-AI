@@ -3,7 +3,8 @@
 > **Transforming passive CCTV cameras into proactive, real-time threat intelligence and natural-language searchable video infrastructure.**
 
 [![Camber Cloud](https://img.shields.io/badge/GPU-Camber_Cloud_GPU-10B981?style=flat-square&logo=nvidia&logoColor=white)](https://camber.cloud)
-[![Gemini 3.5](https://img.shields.io/badge/AI-Gemini_3.5_Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://deepmind.google/gemini)
+[![Qwen2.5-VL](https://img.shields.io/badge/Local_VLM-Qwen2.5--VL--7B-FF6B6B?style=flat-square&logo=huggingface&logoColor=white)](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct)
+[![Gemini](https://img.shields.io/badge/Cloud_AI-Gemini_2.5_Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://deepmind.google/gemini)
 [![Actian VectorAI](https://img.shields.io/badge/VectorDB-Actian_VectorAI-F97316?style=flat-square)](https://actian.com)
 [![Supermemory](https://img.shields.io/badge/Memory-Supermemory-8B5CF6?style=flat-square)](https://supermemory.ai)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -74,13 +75,19 @@ flowchart TD
         MotionDetect -->|"Filter Idle/Dead Video"| SubClips["Active Sub-Clips (10s with 2s overlap)"]
     end
 
-    subgraph S2["2. ACCELERATED INFERENCE ENGINE (Camber Cloud GPU)"]
+    subgraph S2["2. ACCELERATED INFERENCE & DUAL-VERIFICATION (Camber Cloud GPU)"]
         SubClips --> YOLO["YOLO11-L (Object & Crowd Detection)"]
         SubClips --> CLIP["CLIP ViT-L/14 (768-dim Visual Embeddings)"]
-        SubClips --> VLM["Dual-Engine Vision-Language Captioning"]
-        VLM --> GeminiV["Google Gemini Vision (Forensic Narratives)"]
-        VLM --> LocalVLM["On-Device VLM (Behavioral Threat Flags)"]
-        YOLO & CLIP & GeminiV & LocalVLM --> Fusion["Signal Fusion & 3-Tier Alert Scorer"]
+        
+        subgraph DualVLM["Two-Step Verification & Reasoning Engine"]
+            Step1["Step 1: Local Qwen2.5-VL-7B (On-Device GPU)\n• Real-Time Threat Verification\n• Deterministic Behavioral Flags\n• Physical Contact & Stealth Detection\n• 100% Air-Gapped Physical Anchor"]
+            Step2["Step 2: Google Gemini (Multimodal Cloud)\n• Deep Forensic Context Reasoning\n• Semantic Narrative Generation\n• Cross-Frame Holistic Synthesis"]
+            Step1 <-->|"Consensus & Anti-Hallucination Gate\n(CV & Qwen > LLM Text)"| Step2
+        end
+        SubClips --> Step1
+        SubClips --> Step2
+        
+        YOLO & CLIP & DualVLM --> Fusion["Signal Fusion & 3-Tier Alert Scorer (Stage A/B/C)"]
     end
 
     subgraph S3["3. VECTOR STORAGE & MEMORY"]
@@ -90,7 +97,7 @@ flowchart TD
     end
 
     subgraph S4["4. SYNTHESIS & INTERFACE"]
-        Fusion --> GemSynth["Gemini 3.5 Flash (Executive Synthesis)"]
+        Fusion --> GemSynth["Executive Synthesis & Threat Validator"]
         GemSynth --> ReportGen["Incident Report Generator (PDF / TXT)"]
         
         Client["React 19 Frontend (Operator Dashboard)"] <-->|"SSE Stream / REST"| BackendAPI["FastAPI Orchestrator"]
@@ -104,12 +111,19 @@ flowchart TD
 
 1. **Adaptive Motion Gating (80% Compute Savings)**:
    Surveillance cameras frequently record hours of empty rooms or static corridors. Vigilant’s motion-difference gating isolates only active windows, dropping idle frames before any heavy neural network is invoked.
-2. **Compute Flexibility (Camber Cloud GPU / Modal / Local Direct)**:
-   Inference is decoupled from the web orchestrator. It runs natively on **Camber Cloud GPU** (with public tunnel forwarding) for on-demand GPU throughput without credit card gating, with full support for Modal serverless or local GPU execution.
-3. **High-Dimensional Semantic Storage (Actian VectorAI DB)**:
+2. **Two-Step Dual Verification Engine (Beyond Naive API Wrappers)**:
+   Generic "LLM wrappers" that simply pipe raw video to a cloud API fail in mission-critical surveillance: they suffer from network latency, API rate limits, privacy leaks, and dangerous **visual hallucinations** (e.g., misinterpreting an assault as "playful wrestling" or item concealment as "browsing"). Vigilant deploys a rigorous two-step verification pipeline:
+   - **Step 1 — Local GPU Verification (`Qwen2.5-VL-7B`)**: Runs locally in GPU VRAM (BF16) on raw uncompressed frames. Evaluates physical optical motion, proximity metrics, and extracts ground-truth boolean threat flags (`is_fighting`, `is_stealing`, `is_erratic`). Zero latency, zero data egress.
+   - **Step 2 — Semantic Contextual Reasoning (`Google Gemini`)**: Cross-examines the candidate event against situational context, facility type, and after-hours rules to generate an executive forensic narrative.
+   - **Consensus & Authority Chain**: Computer vision detections and local VLM flags take precedence over generative text:
+     $$\text{YOLO / CV Detections (Authoritative)} \;\gt\; \text{Qwen VLM Flags (Ground Truth)} \;\gt\; \text{Gemini Text Caption}$$
+     If Gemini under-calls an incident (e.g., labeling an event "normal_activity"), the programmatic safety net detects the conflict ($\ge 30\%$ threat CV labels) and automatically overrides intent and escalates severity.
+3. **Flexible Operating Modes**:
+   - **Mode 1: Hybrid Dual-Consensus (Standard)**: Pairs local Qwen2.5-VL physical verification on Camber GPU with Gemini's high-level narrative synthesis.
+   - **Mode 2: Air-Gapped Sovereign (Gov / Defense / Banking)**: 100% on-premise execution powered entirely by Qwen2.5-VL, YOLO11, and CLIP on Camber GPU with zero external network calls.
+   - **Mode 3: High-Throughput Cloud (Edge-Optimized)**: Lightweight edge motion gating with direct cloud multimodal streaming for resource-constrained edge hubs.
+4. **High-Dimensional Semantic Storage (Actian VectorAI DB)**:
    Every sub-clip is transformed into a 768-dimensional normalized embedding via OpenAI's CLIP ViT-L/14. Actian VectorAI DB indexes these embeddings with sub-50ms cosine similarity search, allowing free-form natural language querying without relying on fixed metadata tags.
-4. **Dual-Model Threat Consensus**:
-   Visual captioning runs parallel verification: Google Gemini provides high-fidelity natural language forensic descriptions, while local computer vision models extract deterministic boolean flags (`is_fighting`, `is_stealing`, `contact_score`). An authoritative hierarchy ensures computer vision detections cannot be hallucinatively overridden by text synthesis.
 5. **Two-Phase SSE Streaming Chat**:
    Security operators get instant visual feedback. When querying the chat:
    - **Phase 1 (~100-200ms)**: Actian VectorAI returns matching clip cards with timestamps and alert badges.
@@ -122,19 +136,22 @@ flowchart TD
 To avoid credit card restrictions associated with serverless providers like Modal while maintaining dedicated NVIDIA GPU acceleration (e.g., NVIDIA L4 / A100), Vigilant AI is designed to run seamlessly on **Camber Cloud GPU** with secure reverse tunneling (ngrok / Cloudflare Tunnel).
 
 ```
-┌─────────────────────────────────┐                 ┌─────────────────────────────┐
-│       Camber Cloud GPU          │                 │       Operator Client       │
-│  ┌───────────────────────────┐  │                 │  ┌───────────────────────┐  │
-│  │ FastAPI + GPU Models      │  │                 │  │ React 19 Frontend     │  │
-│  │ (YOLO11, CLIP, Gemini)    │  │                 │  │ (Dashboard & Chat)    │  │
-│  └─────────────┬─────────────┘  │                 │  └───────────▲───────────┘  │
-│                │                │                 │              │              │
-│                ▼                │                 │              │              │
-│  ┌───────────────────────────┐  │  HTTPS Tunnel   │              │              │
-│  │ Cloudflare / ngrok Tunnel ├──┼─────────────────┼──────────────┘              │
-│  │ (Public Endpoint)         │  │                 │                             │
-│  └───────────────────────────┘  │                 │                             │
-└─────────────────────────────────┘                 └─────────────────────────────┘
+┌────────────────────────────────────────────────────────┐                 ┌─────────────────────────────┐
+│                   Camber Cloud GPU                     │                 │       Operator Client       │
+│  ┌──────────────────────────────────────────────────┐  │                 │  ┌───────────────────────┐  │
+│  │ A100 / L4 GPU VRAM Footprint (~19 GB)            │  │                 │  │ React 19 Frontend     │  │
+│  │  • YOLO11-L           ~2.0 GB   (Object/Motion)  │  │                 │  │ (Dashboard & Chat)    │  │
+│  │  • CLIP ViT-L/14      ~1.5 GB   (768d Vector)    │  │                 │  └───────────▲───────────┘  │
+│  │  • Qwen2.5-VL-7B      ~15.5 GB  (Local VLM)      │  │                 │              │              │
+│  │                                                  │  │                 │              │              │
+│  │ FastAPI + Dual-Verification Consensus Engine     │  │                 │              │              │
+│  └──────────────────────────┬───────────────────────┘  │                 │              │              │
+│                             │                          │                 │              │              │
+│                             ▼                          │                 │              │              │
+│  ┌──────────────────────────────────────────────────┐  │  HTTPS Tunnel   │              │              │
+│  │ Cloudflare / ngrok Tunnel (Public HTTPS Endpoint)├──┼─────────────────┼──────────────┘              │
+│  └──────────────────────────────────────────────────┘  │                 │                             │
+└────────────────────────────────────────────────────────┘                 └─────────────────────────────┘
 ```
 
 ### 1. Launching on Camber Cloud GPU
@@ -199,8 +216,9 @@ Every clip is evaluated across physical motion magnitude, spatial overlap, perso
 | **Vector Database** | **Actian VectorAI DB** | High-performance, purpose-built vector store communicating via gRPC. Sub-50ms cosine similarity search across 768-dim embeddings. |
 | **Object Detection** | **YOLO11-L** | State-of-the-art real-time object, person, and vehicle detection with sub-15ms inference latency. |
 | **Semantic Embedding** | **OpenAI CLIP ViT-L/14** | Multi-modal alignment model mapping video frames and text prompts into a shared 768-dimensional latent space. |
-| **Forensic Captioning** | **Gemini 3.5 Flash Vision** | Deep multimodal vision analysis generating detailed behavioral descriptions and timestamps. |
-| **Synthesis Reasoning**| **Gemini 3.5 Flash** | Synthesizes hundreds of clip detections into executive summaries, risk levels, and identified perpetrator/victim dynamics. |
+| **Local Physical VLM (Step 1)** | **Qwen2.5-VL-7B-Instruct** | On-device 7B vision-language model in BF16 (~15.5GB VRAM). Extracts ground-truth physical threat flags (`is_fighting`, `is_stealing`) with zero data egress. |
+| **Multimodal Reasoning (Step 2)** | **Google Gemini 2.5 Flash Vision** | Deep multimodal vision analysis generating forensic descriptions, cross-validating physical signals, and identifying behavioral context. |
+| **Synthesis Reasoning**| **Google Gemini 2.5 Flash** | Synthesizes hundreds of clip detections into executive summaries, risk levels, and identified perpetrator/victim dynamics. |
 | **Temporal Memory** | **Supermemory** | Cross-video persistent memory engine enabling natural language queries across weeks of historical camera data. |
 | **API Orchestrator** | **FastAPI (Python 3.11)** | High-performance asynchronous web framework providing Server-Sent Events (SSE) for two-phase streaming responses. |
 | **Structured Store** | **SQLite3** | Zero-latency local storage for fast timeline filtering, clip metadata, and event histories. |
