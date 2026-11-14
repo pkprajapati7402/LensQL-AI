@@ -286,7 +286,7 @@ def _process_video_direct(video_id: str, video_name: str, file_path: str):
                     "Output JSON: {\"description\": \"...\", \"is_fighting\": false, \"is_stealing\": false, \"is_erratic\": false}"
                 )
                 resp = None
-                for m_id in ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3-flash-preview"]:
+                for m_id in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"]:
                     try:
                         resp = gemini_client.models.generate_content(
                             model=m_id,
