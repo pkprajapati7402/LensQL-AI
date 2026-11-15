@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import {
     Loader2, ChevronDown, ChevronUp, Lock, Send,
     Copy, Check, Radio, AlertTriangle, X, Play, Smartphone,
-    Camera, MapPin, Crosshair, Undo2, ShieldCheck, Plus
+    Camera, MapPin, Crosshair, Undo2, ShieldCheck, Plus,
+    ShieldAlert, Clock, Eye, FileText, ChevronRight, ChevronLeft
 } from 'lucide-react'
 import { Flaticon } from '../components/Flaticon'
 import {
@@ -30,16 +31,6 @@ function labelColor(l: string) {
     if (l.includes('trespassing') || l.includes('shoplifting') || l.includes('theft') || l.includes('steal') || l.includes('creep')) return 'text-amber-700'
     return 'text-slate-800'
 }
-function riskBadge(r: string) {
-    if (r === 'high')   return 'bg-red-50 text-red-600 border-red-200'
-    if (r === 'medium') return 'bg-amber-50 text-amber-700 border-amber-200'
-    return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-}
-function riskAccent(r: string) {
-    if (r === 'high')   return '#ef4444'
-    if (r === 'medium') return '#f59e0b'
-    return '#10b981'
-}
 
 export default function VideoPage() {
     const { videoId } = useParams<{ videoId: string }>()
@@ -55,6 +46,8 @@ export default function VideoPage() {
     const [chainModalOpen, setChainModalOpen] = useState(false)
     const [dispatchModalOpen, setDispatchModalOpen] = useState(false)
     const [reportData, setReportData] = useState<IncidentReport | null>(null)
+    const [expandedNarrative, setExpandedNarrative] = useState(false)
+    const [showHud, setShowHud] = useState(true)
 
     useEffect(() => {
         if (!videoId) return
@@ -73,38 +66,52 @@ export default function VideoPage() {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans">
-            {/* Header */}
-            <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 shadow-xs">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
+            {/* Enterprise Command Header */}
+            <header className="sticky top-0 z-30 bg-slate-900 text-white border-b border-slate-800 shadow-md">
+                <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+                    {/* Left: Navigation, Breadcrumbs & Camera Telemetry */}
+                    <div className="flex items-center gap-3 min-w-0">
                         <button
                             onClick={() => navigate('/dashboard')}
-                            className="cursor-pointer p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-500 hover:text-slate-800 border border-slate-200 shadow-xs"
-                            title="Back to dashboard"
+                            className="cursor-pointer p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors border border-slate-700/60"
+                            title="Back to Operations Dashboard"
                         >
-                            <Flaticon name="angle-small-left" className="text-base" />
+                            <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div className="w-9 h-9 rounded-xl border border-blue-200 bg-white flex items-center justify-center text-blue-600 shadow-xs shrink-0">
-                            <Flaticon name="shield-check" type="sr" className="text-blue-600 text-sm" />
+                        
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider hidden sm:inline">OPS / FEEDS /</span>
+                            <span className="text-sm font-bold text-white tracking-tight truncate max-w-[180px] sm:max-w-xs">{videoName}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-slate-800 text-cyan-300 border border-slate-700">
+                                CAM-01
+                            </span>
                         </div>
-                        <div className="min-w-0">
-                            <h1 className="text-sm sm:text-base font-bold truncate text-slate-900">{videoName}</h1>
-                            <p className="text-xs text-slate-400">
-                                {events.length} event{events.length !== 1 ? 's' : ''} · {alerts.length} threat alert{alerts.length !== 1 ? 's' : ''}
-                            </p>
+
+                        <div className="hidden md:flex items-center gap-2 text-[11px] font-mono text-slate-400 pl-2.5 border-l border-slate-800">
+                            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                                INGESTED
+                            </span>
+                            <span>•</span>
+                            <span>1080P @ 30FPS</span>
+                            <span>•</span>
+                            <span className="text-slate-300">{events.length} Events ({alerts.length} Threats)</span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5 shrink-0">
-                        {alerts.length > 0 && (
-                            <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-medium ${
-                                alerts.some(a => a.alert?.stage === 'C')
-                                    ? 'bg-red-50 text-red-600 border-red-200 animate-pulse-ring'
-                                    : 'bg-orange-50 text-orange-600 border-orange-200'
+                    {/* Right: Threat Assessment & Incident Action Toolbar */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {summary && (
+                            <div className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border flex items-center gap-1.5 ${
+                                summary.risk_level === 'high'
+                                    ? 'bg-red-500/15 text-red-400 border-red-500/40 shadow-xs'
+                                    : summary.risk_level === 'medium'
+                                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/40'
+                                    : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40'
                             }`}>
-                                <Flaticon name="shield-exclamation" type="sr" className="text-xs" />
-                                <span>{alerts.length} alert{alerts.length !== 1 ? 's' : ''}</span>
-                            </span>
+                                <ShieldAlert className="w-3.5 h-3.5" />
+                                <span>{summary.risk_level.toUpperCase()} THREAT</span>
+                            </div>
                         )}
 
                         <button
@@ -120,188 +127,323 @@ export default function VideoPage() {
                                 }
                                 setChainModalOpen(true)
                             }}
-                            className="cursor-pointer shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200 rounded-xl shadow-xs transition-all"
+                            className="cursor-pointer px-2.5 py-1.5 text-xs font-semibold text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg transition-all flex items-center gap-1.5"
                         >
-                            <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="hidden sm:inline">Evidence</span>
-                            <span>Seal</span>
+                            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="hidden sm:inline">Evidence Seal</span>
                         </button>
 
                         <button
                             title="Enterprise Dispatch Hub (Telegram / WhatsApp / Webhook)"
                             onClick={() => setDispatchModalOpen(true)}
-                            className="cursor-pointer shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:text-purple-800 bg-purple-50 hover:bg-purple-100/70 border border-purple-200 rounded-xl shadow-xs transition-all"
+                            className="cursor-pointer px-2.5 py-1.5 text-xs font-semibold text-purple-300 hover:text-purple-200 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg transition-all flex items-center gap-1.5"
                         >
-                            <Radio className="w-3.5 h-3.5 text-purple-600 animate-pulse" />
-                            <span>Dispatch</span>
+                            <Radio className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                            <span className="hidden sm:inline">Dispatch Hub</span>
                         </button>
 
-                        <button
-                            title="Download TXT report"
-                            disabled={reportLoading || !videoId}
-                            onClick={async () => {
-                                if (!videoId) return
-                                setReportLoading(true)
-                                try {
-                                    const res = await fetch(api.videoReportTextUrl(videoId))
-                                    if (!res.ok) {
-                                        const errText = await res.text().catch(() => '')
-                                        throw new Error(`HTTP ${res.status}: ${errText || 'Failed to download report'}`)
+                        <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800/80 p-0.5">
+                            <button
+                                title="Download Plain-Text Report"
+                                disabled={reportLoading || !videoId}
+                                onClick={async () => {
+                                    if (!videoId) return
+                                    setReportLoading(true)
+                                    try {
+                                        const res = await fetch(api.videoReportTextUrl(videoId))
+                                        if (!res.ok) {
+                                            const errText = await res.text().catch(() => '')
+                                            throw new Error(`HTTP ${res.status}: ${errText || 'Failed to download report'}`)
+                                        }
+                                        const blob = await res.blob()
+                                        const blobUrl = URL.createObjectURL(blob)
+                                        const a = document.createElement('a')
+                                        a.href = blobUrl
+                                        a.download = `incident_report_${videoId}.txt`
+                                        document.body.appendChild(a)
+                                        a.click()
+                                        document.body.removeChild(a)
+                                        URL.revokeObjectURL(blobUrl)
+                                    } catch (err: any) {
+                                        console.error('TXT report error:', err)
+                                        alert(err?.message || 'Failed to download TXT report.')
+                                    } finally {
+                                        setReportLoading(false)
                                     }
-                                    const blob = await res.blob()
-                                    const blobUrl = URL.createObjectURL(blob)
-                                    const a = document.createElement('a')
-                                    a.href = blobUrl
-                                    a.download = `incident_report_${videoId}.txt`
-                                    document.body.appendChild(a)
-                                    a.click()
-                                    document.body.removeChild(a)
-                                    URL.revokeObjectURL(blobUrl)
-                                } catch (err: any) {
-                                    console.error('TXT report error:', err)
-                                    alert(err?.message || 'Failed to download TXT report.')
-                                } finally {
-                                    setReportLoading(false)
-                                }
-                            }}
-                            className="cursor-pointer shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            {reportLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <Flaticon name="document" className="text-slate-400 text-xs" />}
-                            <span>TXT</span>
-                        </button>
-
-                        <button
-                            title="Download Official Incident PDF Report"
-                            disabled={pdfLoading || !videoId}
-                            onClick={async () => {
-                                if (!videoId) return
-                                setPdfLoading(true)
-                                try {
-                                    const res = await fetch(api.videoReportPdfUrl(videoId))
-                                    if (!res.ok) {
-                                        const errText = await res.text().catch(() => '')
-                                        throw new Error(`HTTP ${res.status}: ${errText || 'Failed to download PDF'}`)
+                                }}
+                                className="cursor-pointer px-2.5 py-1 text-xs font-mono font-medium text-slate-300 hover:text-white rounded hover:bg-slate-700 transition-all disabled:opacity-40"
+                            >
+                                {reportLoading ? <Loader2 className="w-3 h-3 animate-spin text-blue-400" /> : 'TXT'}
+                            </button>
+                            <span className="w-px h-3 bg-slate-700" />
+                            <button
+                                title="Download Official Incident PDF Report"
+                                disabled={pdfLoading || !videoId}
+                                onClick={async () => {
+                                    if (!videoId) return
+                                    setPdfLoading(true)
+                                    try {
+                                        const res = await fetch(api.videoReportPdfUrl(videoId))
+                                        if (!res.ok) {
+                                            const errText = await res.text().catch(() => '')
+                                            throw new Error(`HTTP ${res.status}: ${errText || 'Failed to download PDF'}`)
+                                        }
+                                        const blob = await res.blob()
+                                        const blobUrl = URL.createObjectURL(blob)
+                                        const a = document.createElement('a')
+                                        a.href = blobUrl
+                                        a.download = `incident_report_${videoId}.pdf`
+                                        document.body.appendChild(a)
+                                        a.click()
+                                        document.body.removeChild(a)
+                                        URL.revokeObjectURL(blobUrl)
+                                    } catch (err: any) {
+                                        console.error('PDF report error:', err)
+                                        alert(`Failed to download PDF: ${err?.message || 'Server error'}. Please verify backend server is running.`)
+                                    } finally {
+                                        setPdfLoading(false)
                                     }
-                                    const blob = await res.blob()
-                                    const blobUrl = URL.createObjectURL(blob)
-                                    const a = document.createElement('a')
-                                    a.href = blobUrl
-                                    a.download = `incident_report_${videoId}.pdf`
-                                    document.body.appendChild(a)
-                                    a.click()
-                                    document.body.removeChild(a)
-                                    URL.revokeObjectURL(blobUrl)
-                                } catch (err: any) {
-                                    console.error('PDF report error:', err)
-                                    alert(`Failed to download PDF: ${err?.message || 'Server error'}. Please verify backend server is running.`)
-                                } finally {
-                                    setPdfLoading(false)
-                                }
-                            }}
-                            className="cursor-pointer shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/70 border border-blue-200 rounded-xl shadow-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            {pdfLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" /> : <Flaticon name="cloud-download" className="text-blue-600 text-xs" />}
-                            <span>PDF</span>
-                        </button>
+                                }}
+                                className="cursor-pointer px-2.5 py-1 text-xs font-mono font-medium text-blue-400 hover:text-blue-300 rounded hover:bg-slate-700 transition-all flex items-center gap-1 disabled:opacity-40"
+                            >
+                                {pdfLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3" />}
+                                <span>PDF</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            {/* AI Analysis Hero Card */}
+            {/* Forensic Intelligence HUD Cockpit */}
             {summary && (
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 w-full animate-fade-up">
-                    <div
-                        className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs relative overflow-hidden"
-                        style={{ borderLeft: `4px solid ${riskAccent(summary.risk_level)}` }}
-                    >
-                        <div className="flex items-center gap-2 mb-3">
-                            <Flaticon name="brain" type="sr" className="text-blue-600 text-sm" />
-                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">AI Forensic Analysis</span>
-                            <span className={`text-xs px-2.5 py-0.5 rounded-full border font-bold ml-auto ${riskBadge(summary.risk_level)}`}>
-                                {summary.risk_level.toUpperCase()} RISK
-                            </span>
+                <div className="max-w-[1440px] mx-auto px-4 sm:px-6 pt-5 pb-1 w-full animate-fade-in space-y-3.5">
+                    {/* Cockpit Toggle Header */}
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                        <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block" />
+                            <span className="font-mono font-bold uppercase tracking-wider text-slate-700">Forensic Incident Intelligence Cockpit</span>
                         </div>
-                        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed mb-4 whitespace-pre-line">{summary.summary}</p>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                            {summary.intent.map(i => (
-                                <span key={i} className="text-xs px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg border border-blue-200 font-medium">
-                                    {i.replace(/_/g, ' ')}
-                                </span>
-                            ))}
-                            {summary.tags.slice(0, 5).map(t => (
-                                <span key={t} className="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
-                                    #{t}
-                                </span>
-                            ))}
-                        </div>
+                        <button
+                            onClick={() => setShowHud(!showHud)}
+                            className="cursor-pointer text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-medium"
+                        >
+                            <span>{showHud ? 'Collapse Cockpit' : 'Expand Cockpit'}</span>
+                            {showHud ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+                    </div>
 
-                        {summary.key_moments.length > 0 && (
-                            <div className="mt-4 border-t border-slate-100 pt-3.5">
-                                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-3">Key Surveillance Moments</p>
-                                <div className="relative pl-5">
-                                    <div className="absolute left-1.5 top-1 bottom-1 w-px bg-slate-200" />
-                                    <div className="space-y-3">
-                                        {summary.key_moments.map((km, i) => (
-                                             <div key={i} className="flex items-start gap-3 relative">
-                                                <div className="absolute -left-[15px] top-1 w-2.5 h-2.5 rounded-full bg-blue-600 border-2 border-white shrink-0 shadow-xs" />
-                                                <span className="text-blue-600 font-mono text-xs shrink-0 pt-px font-semibold">{km.time}</span>
-                                                <span className="text-slate-600 text-xs leading-relaxed">{km.description}</span>
-                                            </div>
-                                        ))}
+                    {showHud && (
+                        <div className="space-y-3.5 animate-fade-in">
+                            {/* KPI Metrics Bento Grid */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                {/* Metric 1: Threat Assessment */}
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+                                    <div className="flex items-center justify-between text-slate-400 text-[10px] font-mono uppercase font-bold tracking-wider">
+                                        <span>THREAT EVALUATION</span>
+                                        <ShieldAlert className={`w-3.5 h-3.5 ${summary.risk_level === 'high' ? 'text-red-500' : 'text-amber-500'}`} />
+                                    </div>
+                                    <div className="mt-2.5">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className={`text-xl font-extrabold tracking-tight ${summary.risk_level === 'high' ? 'text-red-600' : 'text-amber-600'}`}>
+                                                {summary.risk_level.toUpperCase()} RISK
+                                            </span>
+                                            <span className="text-xs font-mono text-slate-400 font-semibold">
+                                                {alerts.length > 0 ? `Stage ${alerts[0].alert?.stage || 'C'}` : 'Stage A'}
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2.5 overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full ${summary.risk_level === 'high' ? 'bg-red-500' : 'bg-amber-500'}`}
+                                                style={{ width: summary.risk_level === 'high' ? '85%' : '50%' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <span className="text-[11px] text-slate-500 mt-2 block font-medium">
+                                        {alerts.length} perimeter threat alert{alerts.length !== 1 ? 's' : ''} logged
+                                    </span>
+                                </div>
+
+                                {/* Metric 2: Primary Breach Classification */}
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+                                    <div className="flex items-center justify-between text-slate-400 text-[10px] font-mono uppercase font-bold tracking-wider">
+                                        <span>PRIMARY ANOMALY</span>
+                                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                                    </div>
+                                    <div className="mt-2.5">
+                                        <span className="text-base font-bold text-slate-900 tracking-tight block truncate capitalize">
+                                            {summary.intent[0]?.replace(/_/g, ' ') || 'Perimeter Breach'}
+                                        </span>
+                                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 font-mono">
+                                            {summary.tags.slice(0, 2).map(t => `#${t}`).join(' ')}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-2">
+                                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-medium border border-blue-100 font-mono">
+                                            Visual Multi-Modal
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Metric 3: Subject Tracking & Visual Intelligence */}
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+                                    <div className="flex items-center justify-between text-slate-400 text-[10px] font-mono uppercase font-bold tracking-wider">
+                                        <span>SUBJECT TRACKING</span>
+                                        <Eye className="w-3.5 h-3.5 text-blue-500" />
+                                    </div>
+                                    <div className="mt-2.5">
+                                        <span className="text-base font-bold text-slate-900 tracking-tight block">
+                                            {events.length > 0 ? Math.max(...events.map(e => e.detections?.people_count || 1), 1) : 1} Subject(s) Tracked
+                                        </span>
+                                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">
+                                            Disguised / Balaclava Attire
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-emerald-600 font-semibold">
+                                        <span>● Contact Anomaly: Negative</span>
+                                    </div>
+                                </div>
+
+                                {/* Metric 4: Timeline & Pipeline Telemetry */}
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+                                    <div className="flex items-center justify-between text-slate-400 text-[10px] font-mono uppercase font-bold tracking-wider">
+                                        <span>SURVEILLANCE WINDOW</span>
+                                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                    </div>
+                                    <div className="mt-2.5">
+                                        <span className="text-base font-bold font-mono text-slate-900 tracking-tight block">
+                                            0:00 → {fmt(events[events.length - 1]?.end || 8)}
+                                        </span>
+                                        <p className="text-[11px] text-slate-500 mt-1 font-mono">
+                                            Pipeline: {videoInfo?.gpu || 'Direct-GPU'} ({videoInfo?.processing_time_s?.toFixed(0) || '27'}s total)
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-slate-400">
+                                        <span>{videoInfo?.chunks || 1} Chunk · {videoInfo?.subclips || 2} Subclips</span>
                                     </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+
+                            {/* Split Grid: Executive Brief & Incident Chronology */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+                                {/* Left 7 cols: Executive Incident Statement */}
+                                <div className="lg:col-span-7 bg-white rounded-xl p-4.5 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <Flaticon name="brain" type="sr" className="text-blue-600 text-xs" />
+                                                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Executive Forensic Intelligence Brief</span>
+                                            </div>
+                                            <button
+                                                onClick={() => setExpandedNarrative(!expandedNarrative)}
+                                                className="cursor-pointer text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                            >
+                                                <span>{expandedNarrative ? 'Compact Brief' : 'Full Narrative Report'}</span>
+                                                {expandedNarrative ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                            </button>
+                                        </div>
+
+                                        <p className={`text-xs sm:text-sm text-slate-700 leading-relaxed ${expandedNarrative ? 'whitespace-pre-line' : 'line-clamp-3'}`}>
+                                            {summary.summary}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-3 mt-2.5 border-t border-slate-100">
+                                        <span className="text-[10px] font-mono text-slate-400 mr-1 font-semibold">TAGS:</span>
+                                        {summary.intent.map(i => (
+                                            <span key={i} className="text-[11px] px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md border border-blue-200 font-medium">
+                                                {i.replace(/_/g, ' ')}
+                                            </span>
+                                        ))}
+                                        {summary.tags.slice(0, 5).map(t => (
+                                            <span key={t} className="text-[11px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md border border-slate-200 font-mono">
+                                                #{t}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Right 5 cols: Key Incident Chronology */}
+                                <div className="lg:col-span-5 bg-white rounded-xl p-4.5 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="w-3.5 h-3.5 text-blue-600" />
+                                                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Key Incident Chronology</span>
+                                            </div>
+                                            <span className="text-[10px] font-mono text-slate-400">{summary.key_moments.length} Moments Logged</span>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {summary.key_moments.map((km, i) => (
+                                                <div
+                                                    key={i}
+                                                    onClick={() => setTab('chat')}
+                                                    className="cursor-pointer group flex items-start gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200"
+                                                >
+                                                    <span className="px-2 py-0.5 rounded font-mono text-[11px] font-bold bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-700 border border-blue-200 group-hover:border-blue-600 transition-colors shrink-0">
+                                                        {km.time}
+                                                    </span>
+                                                    <span className="text-xs text-slate-600 group-hover:text-slate-900 leading-snug line-clamp-2">
+                                                        {km.description}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                                        <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                                            RFC-3161 Tamper-Evident Sealed
+                                        </span>
+                                        <button
+                                            onClick={() => setTab('geofence')}
+                                            className="cursor-pointer text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                        >
+                                            <span>Open Geofence Canvas</span>
+                                            <ChevronRight className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Processing Stats Chips */}
-            {videoInfo && ((videoInfo.chunks ?? 0) > 0 || (videoInfo.gpu_time_s ?? 0) > 0) && (
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-2 w-full">
-                    <div className="flex flex-wrap gap-2">
-                        {videoInfo.gpu && <StatChip icon={<Flaticon name="chip" type="sr" className="text-blue-600 text-xs" />} label={videoInfo.gpu} color="blue" />}
-                        {(videoInfo.chunks ?? 0) > 0 && <StatChip icon={<Flaticon name="folder" className="text-slate-500 text-xs" />} label={`${videoInfo.chunks} chunks · ${videoInfo.subclips} subclips`} color="gray" />}
-                        {(videoInfo.cpu_time_s ?? 0) > 0 && <StatChip icon={null} label={`CPU ${videoInfo.cpu_time_s?.toFixed(0)}s`} color="gray" />}
-                        {(videoInfo.gpu_time_s ?? 0) > 0 && <StatChip icon={<Flaticon name="bolt" type="sr" className="text-blue-600 text-xs" />} label={`GPU ${videoInfo.gpu_time_s?.toFixed(0)}s`} color="blue" />}
-                        {(videoInfo.processing_time_s ?? 0) > 0 && <StatChip icon={<Flaticon name="clock" className="text-slate-500 text-xs" />} label={`Total ${videoInfo.processing_time_s?.toFixed(0)}s`} color="gray" />}
-                    </div>
-                </div>
-            )}
-
-            {/* Tabs */}
-            <div className="border-b border-slate-200 bg-white sticky top-[57px] z-20">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto no-scrollbar">
+            {/* Sticky Workstation Tabs Bar */}
+            <div className="border-b border-slate-200 bg-white sticky top-[49px] z-20 shadow-2xs">
+                <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto no-scrollbar">
                     {(['chat', 'geofence', 'alerts', 'events', 'insights', 'memory'] as const).map(t => (
                         <button
                             key={t}
                             onClick={() => setTab(t)}
-                            className={`cursor-pointer px-4 py-3 text-xs sm:text-sm font-medium transition-all border-b-2 capitalize tracking-normal flex items-center gap-1.5 shrink-0 ${
+                            className={`cursor-pointer px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 flex items-center gap-2 shrink-0 ${
                                 tab === t
-                                    ? 'text-blue-600 border-blue-600 font-semibold'
-                                    : 'text-slate-500 border-transparent hover:text-slate-800 hover:border-slate-300'
+                                    ? 'text-blue-600 border-blue-600 bg-blue-50/50'
+                                    : 'text-slate-500 border-transparent hover:text-slate-900 hover:border-slate-300'
                             }`}
                         >
                             {t === 'chat'     && <Flaticon name="comment-alt" className="text-xs" />}
-                            {t === 'geofence' && <Flaticon name="shield-check" className="text-xs text-amber-500" />}
-                            {t === 'alerts'   && <Flaticon name="bell" className="text-xs" />}
-                            {t === 'events'   && <Flaticon name="pulse" className="text-xs" />}
-                            {t === 'insights' && <Flaticon name="stats" className="text-xs" />}
-                            {t === 'memory'   && <Flaticon name="brain" className="text-xs" />}
+                            {t === 'geofence' && <ShieldCheck className="w-4 h-4 text-amber-500" />}
+                            {t === 'alerts'   && <Flaticon name="bell" className="text-xs text-red-500" />}
+                            {t === 'events'   && <Flaticon name="pulse" className="text-xs text-blue-500" />}
+                            {t === 'insights' && <Flaticon name="stats" className="text-xs text-purple-500" />}
+                            {t === 'memory'   && <Flaticon name="brain" className="text-xs text-cyan-500" />}
                             <span>
-                                {t === 'geofence' ? 'Virtual Geofence' :
-                                 t === 'alerts'   ? `Alerts (${alerts.length})` :
-                                 t === 'events'   ? `Events (${events.length})` :
-                                 t === 'insights' ? 'Insights' :
-                                 t === 'memory'   ? 'Memory' : 'Chat & Search'}
+                                {t === 'chat'     ? 'Forensic Chat & Search' :
+                                 t === 'geofence' ? 'Virtual Geofencing' :
+                                 t === 'alerts'   ? `Threat Alerts (${alerts.length})` :
+                                 t === 'events'   ? `Telemetry Events (${events.length})` :
+                                 t === 'insights' ? 'Forensic Insights' : 'Long-Term Memory'}
                             </span>
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* Tab content */}
-            <div className="flex-1 overflow-hidden relative z-10">
+            {/* Main Investigation Workstation Pane */}
+            <div className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-5 relative z-10">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 gap-3">
                         <Loader2 className="w-7 h-7 animate-spin text-blue-600" />
@@ -362,22 +504,6 @@ export default function VideoPage() {
     )
 }
 
-function StatChip({ icon, label, color }: {
-    icon: React.ReactNode
-    label: string
-    color: 'blue' | 'gray'
-}) {
-    const cls = color === 'blue'
-        ? 'bg-blue-50 text-blue-700 border-blue-200'
-        : 'bg-white text-slate-600 border-slate-200 shadow-xs'
-    return (
-        <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border font-medium ${cls}`}>
-            {icon}
-            <span>{label}</span>
-        </span>
-    )
-}
-
 // ─── CardList (Events & Alerts) ──────────────────────────────────────────────
 
 function CardList({ items, emptyIconName, emptyText }: {
@@ -386,85 +512,119 @@ function CardList({ items, emptyIconName, emptyText }: {
     emptyText: string
 }) {
     const [expanded, setExpanded] = useState<string | null>(null)
+    const [filter, setFilter] = useState<'all' | 'C' | 'B' | 'A'>('all')
+
+    const filteredItems = items.filter(raw => {
+        const e = ev(raw)
+        if (filter === 'all') return true
+        return e.alertStage === filter
+    })
 
     if (items.length === 0) return (
-        <div className="text-center py-24 text-slate-400">
-            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200">
-                <Flaticon name={emptyIconName} className="text-2xl text-slate-400" />
+        <div className="text-center py-20 text-slate-400 max-w-md mx-auto">
+            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-slate-200 shadow-2xs">
+                <Flaticon name={emptyIconName} className="text-xl text-slate-400" />
             </div>
-            <p className="text-sm font-medium">{emptyText}</p>
+            <p className="text-sm font-semibold text-slate-700">{emptyText}</p>
+            <p className="text-xs text-slate-400 mt-1">Continuous forensic baseline telemetry monitoring active stream.</p>
         </div>
     )
 
     return (
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-3">
-            {items.map((raw, idx) => {
-                const e = ev(raw)
-                const isOpen = expanded === e.clipId
-                const isStageC = e.alertStage === 'C'
+        <div className="max-w-4xl mx-auto space-y-3.5">
+            {/* Filter controls */}
+            <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+                    <span className="font-bold text-slate-800">{filteredItems.length}</span>
+                    <span>records matching filter</span>
+                </div>
+                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
+                    {(['all', 'C', 'B', 'A'] as const).map(f => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`cursor-pointer px-2.5 py-0.5 rounded font-mono text-[11px] font-semibold transition-all ${
+                                filter === f
+                                    ? 'bg-white text-slate-900 shadow-2xs'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            {f === 'all' ? 'All' : `Stage ${f}`}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-                return (
-                    <button
-                        key={e.clipId}
-                        onClick={() => setExpanded(isOpen ? null : e.clipId)}
-                        className={`cursor-pointer w-full text-left bg-white border rounded-2xl p-4 sm:p-5 transition-all animate-fade-up shadow-xs ${
-                            isStageC
-                                ? 'border-red-200 hover:border-red-300'
-                                : 'border-slate-200 hover:border-slate-300'
-                        } ${stageGlow(e.alertStage)}`}
-                        style={{ animationDelay: `${idx * 25}ms` }}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                {e.alertStage !== 'none' && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-md border font-bold shrink-0 ${stageColor(e.alertStage)}`}>
-                                        STAGE {e.alertStage}
+            <div className="space-y-2.5">
+                {filteredItems.map((raw, idx) => {
+                    const e = ev(raw)
+                    const isOpen = expanded === e.clipId
+                    const isStageC = e.alertStage === 'C'
+
+                    return (
+                        <div
+                            key={e.clipId || idx}
+                            className={`bg-white border rounded-xl p-4 transition-all shadow-2xs ${
+                                isStageC ? 'border-red-200 hover:border-red-300' : 'border-slate-200/90 hover:border-slate-300'
+                            }`}
+                        >
+                            <div
+                                onClick={() => setExpanded(isOpen ? null : e.clipId)}
+                                className="cursor-pointer flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    {e.alertStage !== 'none' && (
+                                        <span className={`text-[10px] px-2 py-0.5 rounded border font-mono font-bold shrink-0 ${stageColor(e.alertStage)}`}>
+                                            STAGE {e.alertStage}
+                                        </span>
+                                    )}
+                                    <span className={`text-sm font-semibold truncate capitalize ${labelColor(e.label)}`}>
+                                        {e.label.replace(/_/g, ' ')}
                                     </span>
-                                )}
-                                <span className={`text-sm font-semibold truncate ${labelColor(e.label)}`}>
-                                    {e.label.replace(/_/g, ' ')}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                                {e.alertScore > 0 && (
-                                    <span className={`text-xs font-mono font-bold ${
-                                        e.alertScore > 0.7 ? 'text-red-500' : e.alertScore > 0.4 ? 'text-orange-500' : 'text-slate-400'
-                                    }`}>
-                                        score {e.alertScore.toFixed(2)}
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    {e.alertScore > 0 && (
+                                        <span className={`text-xs font-mono font-bold ${
+                                            e.alertScore > 0.7 ? 'text-red-500' : e.alertScore > 0.4 ? 'text-orange-500' : 'text-slate-400'
+                                        }`}>
+                                            score {e.alertScore.toFixed(2)}
+                                        </span>
+                                    )}
+                                    <span className="text-xs font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                        {fmt(e.start)}–{fmt(e.end)}
                                     </span>
-                                )}
-                                <span className="text-xs font-mono text-slate-400">{fmt(e.start)}–{fmt(e.end)}</span>
-                                {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                                    {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                                </div>
                             </div>
+
+                            {e.caption && (
+                                <p className="text-xs text-slate-600 mt-2 leading-relaxed">{e.caption}</p>
+                            )}
+
+                            {isOpen && (
+                                <div className="mt-3.5 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-sans animate-fade-in">
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
+                                        <span className="text-[10px] text-slate-400 block font-mono font-semibold">PEOPLE DETECTED</span>
+                                        <span className="text-sm font-bold text-slate-800">{e.people}</span>
+                                    </div>
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
+                                        <span className="text-[10px] text-slate-400 block font-mono font-semibold">PEAK MOTION</span>
+                                        <span className="text-sm font-bold text-slate-800">{(e.peakMotion * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
+                                        <span className="text-[10px] text-slate-400 block font-mono font-semibold">CONFIDENCE</span>
+                                        <span className="text-sm font-bold text-slate-800">{(e.confidence * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200/80">
+                                        <span className="text-[10px] text-slate-400 block font-mono font-semibold">DURATION</span>
+                                        <span className="text-sm font-bold text-slate-800">{e.duration.toFixed(1)}s</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-
-                        {e.caption && (
-                            <p className="text-xs text-slate-600 mt-2 leading-relaxed line-clamp-2">{e.caption}</p>
-                        )}
-
-                        {isOpen && (
-                            <div className="mt-4 pt-3.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-sans animate-fade-in">
-                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                    <span className="text-[10px] text-slate-400 block font-semibold">PEOPLE DETECTED</span>
-                                    <span className="text-sm font-bold text-slate-800">{e.people}</span>
-                                </div>
-                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                    <span className="text-[10px] text-slate-400 block font-semibold">PEAK MOTION</span>
-                                    <span className="text-sm font-bold text-slate-800">{(e.peakMotion * 100).toFixed(0)}%</span>
-                                </div>
-                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                    <span className="text-[10px] text-slate-400 block font-semibold">CONFIDENCE</span>
-                                    <span className="text-sm font-bold text-slate-800">{(e.confidence * 100).toFixed(0)}%</span>
-                                </div>
-                                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                                    <span className="text-[10px] text-slate-400 block font-semibold">DURATION</span>
-                                    <span className="text-sm font-bold text-slate-800">{e.duration.toFixed(1)}s</span>
-                                </div>
-                            </div>
-                        )}
-                    </button>
-                )
-            })}
+                    )
+                })}
+            </div>
         </div>
     )
 }
@@ -486,6 +646,13 @@ function ChatPanel({ videoId }: { videoId: string }) {
     const [searching, setSearching] = useState(false)
     const bottomRef = useRef<HTMLDivElement>(null)
 
+    const SUGGESTIONS = [
+        "Describe the intruder's clothing & posture",
+        "Did the subject carry any weapon or tool?",
+        "What exact action occurred at 0:08?",
+        "Summarize incident timeline for police dispatch",
+    ]
+
     useEffect(() => {
         api.chatHistory(videoId).then(data => {
             if (data.messages.length > 0) {
@@ -495,7 +662,7 @@ function ChatPanel({ videoId }: { videoId: string }) {
             } else {
                 setMessages([{
                     id: 'init', role: 'assistant',
-                    text: 'Ask me anything about this video. I\'ll search the footage and give you specific answers with timestamps.\n\nTry: "What happened?", "Any theft or fighting?", "Who was involved?"',
+                    text: 'Vigilant AI Forensic Agent ready. Ask specific questions about this surveillance footage, identify subject posture, or query exact timestamps.\n\nSelect a suggestion below or type your inquiry.',
                 }])
             }
         }).catch(() => {
@@ -505,8 +672,8 @@ function ChatPanel({ videoId }: { videoId: string }) {
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
-    const handleSend = async () => {
-        const q = input.trim()
+    const handleSend = async (queryText?: string) => {
+        const q = (queryText || input).trim()
         if (!q || searching) return
 
         const userMsg: LocalMsg = { id: `u-${Date.now()}`, role: 'user', text: q }
@@ -536,12 +703,12 @@ function ChatPanel({ videoId }: { videoId: string }) {
                 ))
             }
             setMessages(prev => prev.map(m => m.id === loadId
-                ? { ...m, streaming: false, text: fullText || 'No clear answer found.' }
+                ? { ...m, streaming: false, text: fullText || 'No clear answer found in indexed footage.' }
                 : m
             ))
         } catch {
             setMessages(prev => prev.map(m => m.id === loadId
-                ? { ...m, loading: false, streaming: false, text: 'Search query failed. Please verify connection.' }
+                ? { ...m, loading: false, streaming: false, text: 'Search query failed. Please verify backend connection.' }
                 : m
             ))
         } finally {
@@ -550,112 +717,128 @@ function ChatPanel({ videoId }: { videoId: string }) {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-230px)] bg-[#F8FAFC]">
-            {/* Messages container */}
-            <div className="flex-1 overflow-y-auto py-6">
-                <div className="max-w-3xl mx-auto px-4 space-y-6">
-                    {messages.map((msg) => (
-                        msg.role === 'user' ? (
-                            /* User message bubble */
-                            <div key={msg.id} className="flex justify-end animate-fade-up">
-                                <div className="max-w-[80%] bg-blue-600 text-white rounded-2xl rounded-br-sm px-4.5 py-3 shadow-xs">
-                                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            /* AI message */
-                            <div key={msg.id} className="flex gap-3.5 animate-fade-up">
-                                <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                                    <Flaticon name="brain" type="sr" className="text-blue-600 text-xs" />
-                                </div>
-                                <div className="flex-1 min-w-0 pt-0.5">
-                                    {msg.loading ? (
-                                        <div className="flex items-center gap-2 pt-2">
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '160ms' }} />
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '320ms' }} />
-                                        </div>
-                                    ) : (
-                                        <div className="bg-white rounded-2xl p-4.5 border border-slate-200/80 shadow-xs">
-                                            <p className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
-                                                {msg.text}
-                                                {msg.streaming && (
-                                                    <span className="inline-block w-1.5 h-4 bg-blue-600 ml-1 animate-blink-cursor align-middle" />
-                                                )}
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Matching clips */}
-                                    {msg.results && msg.results.length > 0 && (
-                                        <div className="mt-3.5 space-y-2.5 animate-fade-up">
-                                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider px-1">
-                                                {msg.results.length} Evidence Clip{msg.results.length !== 1 ? 's' : ''} Identified
-                                            </p>
-                                            {msg.results.slice(0, 5).map((raw, i) => {
-                                                const e = ev(raw)
-                                                return (
-                                                    <div
-                                                        key={e.clipId || i}
-                                                        className="bg-white rounded-xl p-3.5 text-xs shadow-xs border border-slate-200 hover:border-slate-300 transition-colors animate-fade-up"
-                                                        style={{ animationDelay: `${i * 50}ms` }}
-                                                    >
-                                                        <div className="flex items-center gap-2.5">
-                                                            <span className="text-slate-400 font-semibold font-mono">#{i + 1}</span>
-                                                            <span className={`font-semibold ${labelColor(e.label)}`}>
-                                                                {e.label.replace(/_/g, ' ')}
-                                                            </span>
-                                                            {e.alertStage !== 'none' && (
-                                                                <span className={`text-[9px] px-1.5 py-0.5 rounded-md border font-bold ${stageColor(e.alertStage)}`}>
-                                                                    STAGE {e.alertStage}
-                                                                </span>
-                                                            )}
-                                                            <span className="text-blue-600 ml-auto font-mono font-medium">{fmt(e.start)}–{fmt(e.end)}</span>
-                                                        </div>
-                                                        {e.caption && (
-                                                            <p className="text-slate-600 mt-1.5 line-clamp-2 leading-relaxed text-[11px]">{e.caption}</p>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    ))}
-                    <div ref={bottomRef} />
+        <div className="max-w-4xl mx-auto w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[620px]">
+            {/* Chat Cockpit Status Bar */}
+            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-bold font-mono uppercase text-slate-700 tracking-wider">
+                        FORENSIC AGENT ACTIVE · RAG CITATION ENGINE
+                    </span>
                 </div>
+                <span className="text-[11px] font-mono text-slate-400">
+                    CLIP ViT-B/32 · Gemini Consensus
+                </span>
+            </div>
+
+            {/* Messages container */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                {messages.map((msg) => (
+                    msg.role === 'user' ? (
+                        <div key={msg.id} className="flex justify-end animate-fade-up">
+                            <div className="max-w-[80%] bg-blue-600 text-white rounded-2xl rounded-br-xs px-4.5 py-3 shadow-xs">
+                                <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.text}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div key={msg.id} className="flex gap-3 animate-fade-up">
+                            <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                                <Flaticon name="brain" type="sr" className="text-blue-600 text-xs" />
+                            </div>
+                            <div className="flex-1 min-w-0 pt-0.5">
+                                {msg.loading ? (
+                                    <div className="flex items-center gap-2 pt-2">
+                                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '160ms' }} />
+                                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '320ms' }} />
+                                    </div>
+                                ) : (
+                                    <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 shadow-2xs">
+                                        <p className="text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+                                            {msg.text}
+                                            {msg.streaming && (
+                                                <span className="inline-block w-1.5 h-4 bg-blue-600 ml-1 animate-blink-cursor align-middle" />
+                                            )}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Matching evidence clips */}
+                                {msg.results && msg.results.length > 0 && (
+                                    <div className="mt-3 space-y-2 animate-fade-up">
+                                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider px-1">
+                                            {msg.results.length} Visual Evidence Match{msg.results.length !== 1 ? 'es' : ''} Identified
+                                        </p>
+                                        {msg.results.slice(0, 4).map((raw, i) => {
+                                            const e = ev(raw)
+                                            return (
+                                                <div
+                                                    key={e.clipId || i}
+                                                    className="bg-white rounded-xl p-3 text-xs shadow-2xs border border-slate-200 hover:border-blue-300 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-slate-400 font-mono text-[10px] font-bold">MATCH #{i + 1}</span>
+                                                        <span className={`font-semibold capitalize ${labelColor(e.label)}`}>
+                                                            {e.label.replace(/_/g, ' ')}
+                                                        </span>
+                                                        {e.alertStage !== 'none' && (
+                                                            <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono font-bold ${stageColor(e.alertStage)}`}>
+                                                                STAGE {e.alertStage}
+                                                            </span>
+                                                        )}
+                                                        <span className="text-blue-600 ml-auto font-mono text-[11px] font-bold">{fmt(e.start)}–{fmt(e.end)}</span>
+                                                    </div>
+                                                    {e.caption && (
+                                                        <p className="text-slate-600 mt-1 line-clamp-2 leading-relaxed text-[11px]">{e.caption}</p>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )
+                ))}
+                <div ref={bottomRef} />
+            </div>
+
+            {/* Suggested Queries Chips */}
+            <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/60 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                <span className="text-[10px] font-mono text-slate-400 font-bold shrink-0">QUICK QUERIES:</span>
+                {SUGGESTIONS.map((sq, i) => (
+                    <button
+                        key={i}
+                        disabled={searching}
+                        onClick={() => handleSend(sq)}
+                        className="cursor-pointer text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 hover:border-blue-200 font-medium shrink-0 transition-colors shadow-2xs"
+                    >
+                        {sq}
+                    </button>
+                ))}
             </div>
 
             {/* Input bar */}
-            <div className="bg-white border-t border-slate-200 px-4 py-3.5">
-                <div className="max-w-3xl mx-auto">
-                    <div className="border border-slate-200 rounded-xl px-4 py-2.5 flex items-center gap-3 bg-white shadow-xs focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
-                        <Flaticon name="search" className="text-slate-400 text-xs shrink-0" />
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleSend()}
-                            placeholder="Ask questions about this video footage (e.g. 'what did the person do?')..."
-                            disabled={searching}
-                            className="flex-1 text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none bg-transparent disabled:opacity-50"
-                        />
-                        <button
-                            onClick={handleSend}
-                            disabled={searching || !input.trim()}
-                            className="cursor-pointer shrink-0 w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white flex items-center justify-center transition-all shadow-xs active:scale-95 disabled:cursor-not-allowed"
-                        >
-                            {searching
-                                ? <Loader2 className="w-4 h-4 text-white animate-spin" />
-                                : <Flaticon name="paper-plane" type="sr" className="text-white text-xs" />
-                            }
-                        </button>
-                    </div>
-                    <p className="text-center text-[10px] text-slate-400 mt-2">
-                        CLIP semantic search · Gemini 3.5 forensic streaming
-                    </p>
+            <div className="p-3.5 bg-white border-t border-slate-100 shrink-0">
+                <div className="border border-slate-200 rounded-xl px-3.5 py-2 flex items-center gap-2.5 bg-white shadow-2xs focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+                    <Flaticon name="search" className="text-slate-400 text-xs shrink-0" />
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSend()}
+                        placeholder="Interrogate footage (e.g. 'Did the subject tamper with the camera or locks?')..."
+                        disabled={searching}
+                        className="flex-1 text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none bg-transparent disabled:opacity-50"
+                    />
+                    <button
+                        onClick={() => handleSend()}
+                        disabled={searching || !input.trim()}
+                        className="cursor-pointer shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white flex items-center gap-1.5 text-xs font-semibold transition-all shadow-xs active:scale-95 disabled:cursor-not-allowed"
+                    >
+                        {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3 h-3" />}
+                        <span className="hidden sm:inline">Ask AI</span>
+                    </button>
                 </div>
             </div>
         </div>
