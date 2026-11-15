@@ -21,7 +21,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
-DB_PATH = Path("vigilant.db")   # sits in the backend/ root
+DB_PATH = Path(__file__).resolve().parent.parent / "vigilant.db"
 
 
 # ─── Schema ───────────────────────────────────────────────────────────────────

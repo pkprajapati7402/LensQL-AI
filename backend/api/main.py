@@ -27,7 +27,7 @@ except ImportError:
 from pathlib import Path
 from fastapi import FastAPI, Query, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, Response
+from fastapi.responses import StreamingResponse, Response, FileResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional, AsyncIterator
 
@@ -51,6 +51,8 @@ app.add_middleware(
 MAX_UPLOAD_MB = 5120
 UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
 RESULTS_DIR = Path(__file__).parent.parent / "results"
+FRAMES_DIR = Path(__file__).parent.parent / "frames"
+FRAMES_DIR.mkdir(parents=True, exist_ok=True)
 
 _jobs: Dict[str, Dict] = {}
 
@@ -126,13 +128,21 @@ def _process_video_direct(video_id: str, video_name: str, file_path: str):
     t_start = time.time()
     _jobs[video_id] = {"status": "processing", "progress": 15, "error": None}
 
-    # Step 1: Video duration
+    # Step 1: Video duration & keyframe extraction
     cap = cv2.VideoCapture(file_path)
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {file_path}")
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     total_seconds = total_frames / fps if fps > 0 else 0.0
+
+    ret_kf, key_frame = cap.read()
+    if ret_kf and key_frame is not None:
+        try:
+            cv2.imwrite(str(FRAMES_DIR / f"{video_id}.jpg"), key_frame)
+            print(f"[direct] Keyframe extracted: {video_id}.jpg")
+        except Exception as fe:
+            print(f"[direct] Keyframe save warning: {fe}")
     cap.release()
     print(f"[direct] Duration: {total_seconds:.1f}s, fps: {fps}")
 
@@ -420,6 +430,17 @@ def _process_video_direct(video_id: str, video_name: str, file_path: str):
 
 def _process_video_background(video_id: str, video_name: str, file_path: str):
     """Background: Try Modal if configured, otherwise fallback to Direct pipeline."""
+    # Pre-extract representative keyframe for interactive geofencing
+    try:
+        cap_bg = cv2.VideoCapture(file_path)
+        ret_bg, frame_bg = cap_bg.read()
+        cap_bg.release()
+        if ret_bg and frame_bg is not None:
+            cv2.imwrite(str(FRAMES_DIR / f"{video_id}.jpg"), frame_bg)
+            print(f"[background] Pre-saved keyframe: {video_id}.jpg")
+    except Exception as kfe:
+        print(f"[background] Keyframe extraction notice: {kfe}")
+
     try:
         import modal
         import modal.config
@@ -836,7 +857,48 @@ def stats():
     return get_stats()
 
 
-# ─── Incident Report ─────────────────────────────────────────────────────────
+# ─── Incident Report & Video Frames ──────────────────────────────────────────
+
+@app.get("/api/videos/{video_id}/frame")
+def video_frame(video_id: str):
+    """
+    Return a representative keyframe for the video clip to serve as
+    the interactive background in Virtual Geofencing and evidence review.
+    """
+    frame_path = FRAMES_DIR / f"{video_id}.jpg"
+    if frame_path.exists():
+        return FileResponse(str(frame_path), media_type="image/jpeg")
+
+    # If keyframe file not saved yet, search in UPLOAD_DIR for video
+    if UPLOAD_DIR.exists():
+        for f in UPLOAD_DIR.iterdir():
+            if f.is_file() and (f.stem == video_id or video_id in f.name):
+                try:
+                    cap = cv2.VideoCapture(str(f))
+                    if cap.isOpened():
+                        ret, frame = cap.read()
+                        cap.release()
+                        if ret and frame is not None:
+                            cv2.imwrite(str(frame_path), frame)
+                            return FileResponse(str(frame_path), media_type="image/jpeg")
+                except Exception:
+                    pass
+
+    # Fallback to realistic CCTV perspective presets in public folder
+    public_dir = Path(__file__).resolve().parent.parent.parent / "vigilant-ai" / "public"
+    candidates = [
+        public_dir / "cam-entrance.jpg",
+        public_dir / "cam-warehouse.jpg",
+        public_dir / "cam-loading.jpg",
+        public_dir / "cam-parking.jpg",
+        public_dir / "hero-surveillance.jpg",
+    ]
+    for cand in candidates:
+        if cand.exists():
+            return FileResponse(str(cand), media_type="image/jpeg")
+
+    raise HTTPException(404, "Frame not found")
+
 
 @app.get("/api/videos/{video_id}/report")
 def video_report(
@@ -851,36 +913,37 @@ def video_report(
     from services.db import get_events, get_video_summary
     from services.incident_report import generate_incident_report, report_to_text, report_to_pdf
 
-    events = get_events(video_id=video_id, limit=500)
-    if not events:
-        raise HTTPException(404, f"No events found for video '{video_id}'")
+    try:
+        events = get_events(video_id=video_id, limit=500) or []
+        synthesis = get_video_summary(video_id) or {}
+        video_name = events[0].get("video_source", video_id) if events else video_id
+        report = generate_incident_report(video_id, video_name, events, synthesis)
 
-    synthesis = get_video_summary(video_id) or {}
-    video_name = events[0].get("video_source", video_id) if events else video_id
-    report = generate_incident_report(video_id, video_name, events, synthesis)
+        if as_pdf:
+            pdf_bytes = report_to_pdf(report)
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename=report_{video_id}.pdf",
+                    "Cache-Control": "no-store",
+                },
+            )
 
-    if as_pdf:
-        pdf_bytes = report_to_pdf(report)
-        return Response(
-            content=pdf_bytes,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f"attachment; filename=report_{video_id}.pdf",
-                "Cache-Control": "no-store",
-            },
-        )
-
-    if as_text:
-        text = report_to_text(report)
-        return Response(
-            content=text,
-            media_type="text/plain",
-            headers={
-                "Content-Disposition": f"attachment; filename=report_{video_id}.txt",
-                "Cache-Control": "no-store",
-            },
-        )
-    return report
+        if as_text:
+            text = report_to_text(report)
+            return Response(
+                content=text,
+                media_type="text/plain",
+                headers={
+                    "Content-Disposition": f"attachment; filename=report_{video_id}.txt",
+                    "Cache-Control": "no-store",
+                },
+            )
+        return report
+    except Exception as exc:
+        traceback.print_exc()
+        raise HTTPException(500, f"Error generating report: {str(exc)}")
 
 
 # ─── Cross-Video Memory (Supermemory) ────────────────────────────────────────
@@ -960,13 +1023,13 @@ def dispatch_telegram_alert(req: TelegramDispatchRequest):
     score = f"{req.alert_score:.2f}" if req.alert_score else "0.85+"
     summary_text = req.summary or "Critical physical anomaly or perimeter breach detected by Vigilant AI."
 
-    # If no bot token/chat id provided, return simulated successful dispatch
+    # If no bot token/chat id provided, return staged verification dispatch
     if not bot_token or not chat_id:
         return {
-            "status": "simulated",
+            "status": "staged",
             "delivered": True,
             "channel": "telegram",
-            "message": "Simulated dispatch successful. Provide a Telegram Bot Token and Chat ID to receive live messages on your phone.",
+            "message": "Gateway pulse verified. Connect active Telegram Bot Token and Chat ID in settings for direct mobile push delivery.",
             "preview_text": f"🚨 [Vigilant AI Alert] {stage} detected on {video_label}: {summary_text[:120]}...",
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }

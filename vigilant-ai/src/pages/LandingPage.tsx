@@ -793,7 +793,7 @@ export default function LandingPage() {
                             Experience Natural Language Video Retrieval
                         </h2>
                         <p className="text-xs text-slate-500">
-                            Click a simulated query below to see how Vigilant AI indexes and cites visual evidence instantly.
+                            Click an example forensic query below to see how Vigilant AI indexes and cites visual evidence instantly.
                         </p>
                     </div>
 

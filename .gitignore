@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+vigilant.db
+
+# Large media & uploads
+uploads/
+results/
+frames/
+*.mp4
+*.avi
+*.mkv
+*.mov
+
+# Node / Frontend
+node_modules/
+.npm
+dist/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Cache & Temporary
+.clip_cache/
+vectordb_data/
+output*.txt
+temp_events*.json
+sample_events*.json
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -301,6 +301,9 @@ export const api = {
   videoInfo: (videoId: string) =>
     apiFetch<VideoInfo>(`/videos/${videoId}`),
 
+  videoFrameUrl: (videoId: string) =>
+    `${API_BASE}/videos/${videoId}/frame`,
+
   videoReport: (videoId: string) =>
     apiFetch<IncidentReport>(`/videos/${videoId}/report`),
 

@@ -129,8 +129,51 @@ Respond ONLY with raw JSON (no markdown, no code fences):
   ]
 }}"""
 
-    raw = _call_gemini(prompt, max_tokens=1500)
-    report_data = _parse_gemini_json(raw)
+    report_data = {}
+    try:
+        raw = _call_gemini(prompt, max_tokens=1500)
+        report_data = _parse_gemini_json(raw)
+    except Exception as exc:
+        print(f"[incident_report] Gemini call notice: {exc}")
+
+    # Fallback if Gemini returned empty, errored, or lacks summary
+    if not report_data or not report_data.get("executive_summary"):
+        highest_stage = "C" if stage_c_count > 0 else ("B" if alerts else "A")
+        fallback_sev = "critical" if highest_stage == "C" else ("high" if alerts else "low")
+        fallback_cls = labels[0] if labels else "surveillance_event"
+        primary_narrative = (
+            synthesis.get("summary")
+            if synthesis and synthesis.get("summary") and not synthesis.get("summary").startswith("Video '")
+            else f"Automated forensic surveillance detected {len(alerts)} alerts across a {duration_s:.0f}s active incident window. "
+                 f"Key activity observed involves {', '.join(labels) or 'detected movement'} with maximum {max_people} individual(s) in frame."
+        )
+        report_data = {
+            "title": f"Incident Analysis: {video_name}",
+            "classification": fallback_cls,
+            "severity": fallback_sev,
+            "executive_summary": primary_narrative,
+            "incident_window": {"start": _fmt_time(incident_start), "end": _fmt_time(incident_end), "duration_s": duration_s},
+            "parties": {
+                "total_persons": max_people,
+                "perpetrators_estimated": 1 if alerts else 0,
+                "victims_estimated": max(0, max_people - 1),
+                "note": f"Estimated based on visual tracking ({max_people} people peak detected in active area)."
+            },
+            "key_moments": [
+                {"time": _fmt_time(e.get("start", 0)), "description": _safe_caption(e) or f"Stage-{_get_stage(e)} alert triggered"}
+                for e in evidence_clips[:5]
+            ],
+            "physical_indicators": {
+                "contact_detected": max_contact > 0.3,
+                "max_contact_score": float(max_contact),
+                "sustained": duration_s > 60
+            },
+            "recommendations": [
+                "Preserve local NVR video segment and cryptographic chain-of-custody seal.",
+                "Verify suspect identification with perimeter physical security logs.",
+                "Dispatch alert documentation to designated response team."
+            ]
+        }
 
     # ── 6. Merge generated data with computed facts & cryptographic seal ──────
     import hashlib
@@ -173,40 +216,51 @@ Respond ONLY with raw JSON (no markdown, no code fences):
 
 def report_to_text(report: Dict) -> str:
     """Render a report dict as a human-readable plain-text document."""
+    sev = str(report.get("severity") or "UNKNOWN").upper()
+    cls_raw = report.get("classification") or "Unclassified"
+    if isinstance(cls_raw, list):
+        cls_ = ", ".join(str(c) for c in cls_raw).replace("_", " ").title()
+    else:
+        cls_ = str(cls_raw).replace("_", " ").title()
+
     lines = [
         "=" * 70,
-        f"  VIGILANT-AI SECURITY INCIDENT REPORT",
+        "  VIGILANT-AI SECURITY INCIDENT REPORT",
         "=" * 70,
         f"  Report ID   : {report.get('report_id', 'N/A')}",
         f"  Video       : {report.get('video_name', '')}",
         f"  Generated   : {report.get('generated_at', '')}",
-        f"  Severity    : {report.get('severity', '').upper()}",
-        f"  Class       : {report.get('classification', '').replace('_', ' ').title()}",
+        f"  Severity    : {sev}",
+        f"  Class       : {cls_}",
         "=" * 70,
         "",
-        f"TITLE: {report.get('title', '')}",
+        f"TITLE: {report.get('title', 'Security Incident Report')}",
         "",
         "─" * 70,
         "EXECUTIVE SUMMARY",
         "─" * 70,
-        report.get("executive_summary", ""),
+        str(report.get("executive_summary") or "No narrative summary available."),
         "",
     ]
 
-    iw = report.get("incident_window", {})
-    if iw:
+    iw = report.get("incident_window")
+    if isinstance(iw, dict):
+        try:
+            dur = float(iw.get('duration_s') or 0)
+        except (ValueError, TypeError):
+            dur = 0.0
         lines += [
             "─" * 70,
             "INCIDENT WINDOW",
             "─" * 70,
             f"  Start    : {iw.get('start', 'N/A')}",
             f"  End      : {iw.get('end',   'N/A')}",
-            f"  Duration : {iw.get('duration_s', 0):.0f}s",
+            f"  Duration : {dur:.0f}s",
             "",
         ]
 
-    parties = report.get("parties", {})
-    if parties:
+    parties = report.get("parties")
+    if isinstance(parties, dict):
         lines += [
             "─" * 70,
             "PARTIES INVOLVED",
@@ -218,29 +272,37 @@ def report_to_text(report: Dict) -> str:
             "",
         ]
 
-    km = report.get("key_moments", [])
-    if km:
+    km = report.get("key_moments")
+    if isinstance(km, list) and km:
         lines += ["─" * 70, "KEY MOMENTS", "─" * 70]
         for m in km:
-            lines.append(f"  {m.get('time','?')}  {m.get('description','')}")
+            if isinstance(m, dict):
+                lines.append(f"  {m.get('time','?')}  {m.get('description','')}")
+            else:
+                lines.append(f"  {m}")
         lines.append("")
 
-    recs = report.get("recommendations", [])
-    if recs:
+    recs = report.get("recommendations")
+    if isinstance(recs, list) and recs:
         lines += ["─" * 70, "RECOMMENDATIONS", "─" * 70]
         for i, r in enumerate(recs, 1):
             lines.append(f"  {i}. {r}")
         lines.append("")
 
-    ec = report.get("evidence_clips", [])
-    if ec:
+    ec = report.get("evidence_clips")
+    if isinstance(ec, list) and ec:
         lines += ["─" * 70, f"EVIDENCE CLIPS ({len(ec)} key moments selected from {report.get('total_alerts', '?')} alerts)", "─" * 70]
         for c in ec:
-            lines.append(f"  [{c.get('time_start','?')}–{c.get('time_end','?')}] Stage-{c.get('stage','?')} ({c.get('score',0):.2f})  {c.get('caption','')}")
+            if isinstance(c, dict):
+                try:
+                    sc = float(c.get("score", 0) or 0)
+                except (ValueError, TypeError):
+                    sc = 0.0
+                lines.append(f"  [{c.get('time_start','?')}–{c.get('time_end','?')}] Stage-{c.get('stage','?')} ({sc:.2f})  {c.get('caption','')}")
         lines.append("")
 
-    coc = report.get("chain_of_custody", {})
-    if coc:
+    coc = report.get("chain_of_custody")
+    if isinstance(coc, dict):
         lines += [
             "─" * 70,
             "LEGAL CHAIN OF CUSTODY & CRYPTOGRAPHIC VERIFICATION",
@@ -281,18 +343,24 @@ def report_to_pdf(report: Dict) -> bytes:
     pdf.set_fill_color(30, 30, 48)
     pdf.set_text_color(160, 160, 190)
     pdf.set_font("Helvetica", "", 7.5)
+    gen_at = str(report.get('generated_at') or '')[:19].replace('T', ' ')
     pdf.cell(
         0, 6,
         f"Report ID: {report.get('report_id','N/A')}   |   "
-        f"Generated: {report.get('generated_at','')[:19].replace('T',' ')}   |   "
+        f"Generated: {gen_at}   |   "
         f"Vigilant AI · Security Intelligence",
         fill=True, align="C", new_x="LMARGIN", new_y="NEXT",
     )
     pdf.ln(3)
 
     # ── Meta row ──────────────────────────────────────────────────────────────
-    sev = report.get("severity", "unknown").upper()
-    cls_ = report.get("classification", "").replace("_", " ").title()
+    sev = str(report.get("severity") or "UNKNOWN").upper()
+    cls_raw = report.get("classification") or "Unclassified"
+    if isinstance(cls_raw, list):
+        cls_ = ", ".join(str(c) for c in cls_raw).replace("_", " ").title()
+    else:
+        cls_ = str(cls_raw).replace("_", " ").title()
+
     pdf.set_text_color(40, 40, 50)
     pdf.set_font("Helvetica", "B", 9)
     meta_text = f"Video: {report.get('video_name','')}   |   Severity: {sev}   |   Classification: {cls_}"
@@ -305,39 +373,52 @@ def report_to_pdf(report: Dict) -> bytes:
         pdf.set_fill_color(235, 235, 248)
         pdf.set_text_color(40, 40, 90)
         pdf.set_font("Helvetica", "B", 8.5)
-        safe_title = "".join(c if ord(c) < 256 else "?" for c in title)
+        safe_title = "".join(c if ord(c) < 256 else "?" for c in str(title))
         pdf.cell(0, 6.5, safe_title, fill=True, new_x="LMARGIN", new_y="NEXT")
         pdf.ln(0.5)
 
-    def _body(text: str, size: float = 9) -> None:
+    def _body(text: Any, size: float = 9) -> None:
         pdf.set_font("Helvetica", "", size)
         pdf.set_text_color(40, 40, 50)
         # Built-in Helvetica only supports latin-1 (0-255) — replace anything outside
-        safe = (text or "").replace("\u2014", "-").replace("\u2013", "-").replace("\u2022", "*")
+        safe = (
+            str(text or "")
+            .replace("\u2014", "-")
+            .replace("\u2013", "-")
+            .replace("\u2022", "*")
+            .replace("\u2018", "'")
+            .replace("\u2019", "'")
+            .replace("\u201c", '"')
+            .replace("\u201d", '"')
+        )
         safe = "".join(c if ord(c) < 256 else "?" for c in safe)
         pdf.multi_cell(0, 5, safe)
         pdf.ln(1.5)
 
     # ── Title ─────────────────────────────────────────────────────────────────
     _section("INCIDENT TITLE")
-    _body(report.get("title", "Untitled Incident"), size=10)
+    _body(report.get("title") or "Untitled Incident", size=10)
 
     # ── Executive Summary ─────────────────────────────────────────────────────
     _section("EXECUTIVE SUMMARY")
-    _body(report.get("executive_summary", "No summary available."))
+    _body(report.get("executive_summary") or "No summary available.")
 
     # ── Incident Window ───────────────────────────────────────────────────────
-    iw = report.get("incident_window", {})
-    if iw:
+    iw = report.get("incident_window")
+    if isinstance(iw, dict):
         _section("INCIDENT WINDOW")
+        try:
+            dur = float(iw.get('duration_s') or 0)
+        except (ValueError, TypeError):
+            dur = 0.0
         _body(
             f"Start: {iw.get('start','N/A')}   |   End: {iw.get('end','N/A')}   |   "
-            f"Duration: {iw.get('duration_s', 0):.0f}s"
+            f"Duration: {dur:.0f}s"
         )
 
     # ── Parties ───────────────────────────────────────────────────────────────
-    parties = report.get("parties", {})
-    if parties:
+    parties = report.get("parties")
+    if isinstance(parties, dict):
         _section("PARTIES INVOLVED")
         _body(
             f"Total persons in frame: {parties.get('total_persons','?')}\n"
@@ -347,34 +428,42 @@ def report_to_pdf(report: Dict) -> bytes:
         )
 
     # ── Key Moments ───────────────────────────────────────────────────────────
-    km = report.get("key_moments", [])
-    if km:
+    km = report.get("key_moments")
+    if isinstance(km, list) and km:
         _section(f"KEY MOMENTS  ({len(km)})")
         for m in km:
-            _body(f"  {m.get('time','?')}   {m.get('description','')}")
+            if isinstance(m, dict):
+                _body(f"  {m.get('time','?')}   {m.get('description','')}")
+            else:
+                _body(f"  {m}")
 
     # ── Recommendations ───────────────────────────────────────────────────────
-    recs = report.get("recommendations", [])
-    if recs:
+    recs = report.get("recommendations")
+    if isinstance(recs, list) and recs:
         _section("RECOMMENDATIONS")
         for i, r in enumerate(recs, 1):
             _body(f"{i}. {r}")
 
     # ── Evidence Clips ────────────────────────────────────────────────────────
-    ec = report.get("evidence_clips", [])
-    if ec:
+    ec = report.get("evidence_clips")
+    if isinstance(ec, list) and ec:
         _section(f"EVIDENCE CLIPS  ({len(ec)} selected from {report.get('total_alerts','?')} alerts)")
         for c in ec:
-            cap = c.get("caption", "")
-            _body(
-                f"[{c.get('time_start','?')} – {c.get('time_end','?')}]  "
-                f"Stage-{c.get('stage','?')} ({c.get('score',0):.2f})   {cap}",
-                size=8.5,
-            )
+            if isinstance(c, dict):
+                cap = c.get("caption", "")
+                try:
+                    sc = float(c.get("score", 0) or 0)
+                except (ValueError, TypeError):
+                    sc = 0.0
+                _body(
+                    f"[{c.get('time_start','?')} - {c.get('time_end','?')}]  "
+                    f"Stage-{c.get('stage','?')} ({sc:.2f})   {cap}",
+                    size=8.5,
+                )
 
     # ── Cryptographic Chain of Custody Certificate ────────────────────────────
-    coc = report.get("chain_of_custody", {})
-    if coc:
+    coc = report.get("chain_of_custody")
+    if isinstance(coc, dict):
         _section("LEGAL CHAIN OF CUSTODY & DIGITAL FORENSIC CERTIFICATE")
         _body(
             f"SHA-256 Evidence Hash: {coc.get('sha256_evidence_hash', 'N/A')}\n"

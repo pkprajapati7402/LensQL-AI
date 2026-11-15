@@ -107,11 +107,12 @@ _API_ERROR_CAPTIONS = {"api error", "api error.", "[api error]", "api_error"}
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
+    "gemini-3.8-flash",
     "gemini-3.5-flash",
+    "gemini-flash-latest",
     "gemini-3.1-flash-lite",
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash",
 ]
 MODEL_ID = GEMINI_MODELS[0]
 

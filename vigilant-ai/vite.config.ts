@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'https://bunny-particular-nuclear-wildlife.trycloudflare.com',
+        target: process.env.VITE_BACKEND_URL || 'https://segment-mustang-monte-theme.trycloudflare.com/',
         changeOrigin: true,
         secure: false,
       },
