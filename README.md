@@ -158,8 +158,8 @@ To avoid credit card restrictions associated with serverless providers like Moda
 1. Launch an on-demand GPU instance on [Camber Cloud](https://camber.cloud) (e.g., NVIDIA L4 or A100).
 2. Clone this repository and install dependencies:
    ```bash
-   git clone https://github.com/princ/Vigilant.git
-   cd Vigilant/backend
+   git clone https://github.com/pkprajapati7402/LensQL-AI.git
+   cd LensQL-AI/backend
    pip install -r requirements.txt
    ```
 3. Set your environment variables in `backend/.env`:
@@ -230,7 +230,7 @@ Every clip is evaluated across physical motion magnitude, spatial overlap, perso
 ## 📂 Project Organization
 
 ```
-Vigilant/
+LensQL-AI/
 ├── backend/
 │   ├── api/
 │   │   └── main.py              # REST API & Server-Sent Events (SSE) engine
