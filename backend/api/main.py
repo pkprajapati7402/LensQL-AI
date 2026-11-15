@@ -1021,7 +1021,7 @@ def dispatch_telegram_alert(req: TelegramDispatchRequest):
     video_label = req.video_name or req.video_id or "Surveillance Feed"
     stage = req.alert_stage or "Stage C"
     score = f"{req.alert_score:.2f}" if req.alert_score else "0.85+"
-    summary_text = req.summary or "Critical physical anomaly or perimeter breach detected by Vigilant AI."
+    summary_text = req.summary or "Critical physical anomaly or perimeter breach detected by LensQL AI."
 
     # If no bot token/chat id provided, return staged verification dispatch
     if not bot_token or not chat_id:
@@ -1030,12 +1030,12 @@ def dispatch_telegram_alert(req: TelegramDispatchRequest):
             "delivered": True,
             "channel": "telegram",
             "message": "Gateway pulse verified. Connect active Telegram Bot Token and Chat ID in settings for direct mobile push delivery.",
-            "preview_text": f"🚨 [Vigilant AI Alert] {stage} detected on {video_label}: {summary_text[:120]}...",
+            "preview_text": f"🚨 [LensQL AI Alert] {stage} detected on {video_label}: {summary_text[:120]}...",
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
     text = (
-        f"🚨 *VIGILANT AI — SECURITY INCIDENT DISPATCH*\n"
+        f"🚨 *LENSQL AI — SECURITY INCIDENT DISPATCH*\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"🎥 *Source:* `{video_label}`\n"
         f"⚠️ *Severity:* *{stage}* (Confidence: `{score}`)\n"
@@ -1044,7 +1044,7 @@ def dispatch_telegram_alert(req: TelegramDispatchRequest):
         f"🛡️ *Verification:* `Dual-Stage Neural Consensus Engine`\n"
         f"🔒 *Chain of Custody:* `RFC-3161 Verified`\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⚡ _Dispatched via Vigilant Enterprise Hub_"
+        f"⚡ _Dispatched via LensQL Enterprise Hub_"
     )
 
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"

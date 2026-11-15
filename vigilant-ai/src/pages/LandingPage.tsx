@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Flaticon } from '../components/Flaticon'
+import { LensQLLogo } from '../components/LensQLLogo'
 
 export default function LandingPage() {
     const navigate = useNavigate()
@@ -91,12 +92,7 @@ export default function LandingPage() {
                         onClick={() => navigate('/')}
                         className="cursor-pointer flex items-center gap-2.5 group"
                     >
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-xs group-hover:border-blue-400 transition-colors">
-                            <Flaticon name="shield-check" type="sr" className="text-xl text-blue-600" />
-                        </div>
-                        <span className="text-lg font-bold text-slate-900 tracking-tight">
-                            Vigilant AI
-                        </span>
+                        <LensQLLogo className="w-9 h-9" showText textClassName="text-xl font-extrabold tracking-tight text-slate-900" />
                     </div>
 
                     {/* Nav Links */}
@@ -164,7 +160,7 @@ export default function LandingPage() {
 
                             {/* Subtitle */}
                             <p className="text-sm sm:text-base text-slate-500 leading-relaxed font-normal max-w-lg">
-                                Vigilant AI monitors your cameras using advanced ML and reasoning models — not just to detect objects, but to understand what's actually happening. Ask questions in plain English and get instant, accurate answers.
+                                LensQL AI monitors your cameras using advanced ML and reasoning models — not just to detect objects, but to understand what's actually happening. Ask questions in plain English and get instant, accurate answers.
                             </p>
 
                             {/* Action Buttons */}
@@ -240,10 +236,8 @@ export default function LandingPage() {
                                     <div className="px-4 py-3 border-b border-slate-200/80 flex items-center justify-between bg-slate-50/50">
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-md bg-blue-600 text-white flex items-center justify-center">
-                                                    <Flaticon name="shield-check" type="sr" className="text-xs text-white" />
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-900">Vigilant AI</span>
+                                                <LensQLLogo className="w-5 h-5" />
+                                                <span className="text-xs font-bold text-slate-900">LensQL AI</span>
                                             </div>
                                             <div className="hidden sm:flex items-center gap-2 pl-2">
                                                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200">
@@ -368,13 +362,13 @@ export default function LandingPage() {
                                             </div>
                                         </div>
 
-                                        {/* Ask Vigilant AI Panel (5 cols) */}
+                                        {/* Ask LensQL AI Panel (5 cols) */}
                                         <div className="col-span-12 sm:col-span-6 lg:col-span-5 p-3 flex flex-col justify-between space-y-2.5 bg-white">
                                             <div className="space-y-2.5">
                                                 {/* Panel Title */}
                                                 <div className="flex items-center gap-1.5">
                                                     <Flaticon name="sparkles" className="text-blue-600 text-xs" />
-                                                    <span className="text-xs font-bold text-slate-900">Ask Vigilant AI</span>
+                                                    <span className="text-xs font-bold text-slate-900">Ask LensQL AI</span>
                                                 </div>
 
                                                 {/* User Query Bubble */}
@@ -390,10 +384,8 @@ export default function LandingPage() {
                                                 {/* AI Response Card */}
                                                 <div className="border border-slate-200 rounded-xl p-2.5 bg-slate-50/60 space-y-2 text-left">
                                                     <div className="flex items-center gap-2">
-                                                        <div className="w-4 h-4 rounded bg-blue-600 text-white flex items-center justify-center text-[8px]">
-                                                            <Flaticon name="shield-check" type="sr" className="text-[9px] text-white" />
-                                                        </div>
-                                                        <span className="text-[10px] font-bold text-slate-800">Vigilant Intelligence</span>
+                                                        <LensQLLogo className="w-4 h-4" />
+                                                        <span className="text-[10px] font-bold text-slate-800">LensQL Intelligence</span>
                                                         <span className="text-[9px] font-mono text-slate-400 ml-auto">
                                                             {HERO_PROMPTS[heroPromptIdx].time}
                                                         </span>
@@ -617,7 +609,7 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        {/* Vigilant AI Card */}
+                        {/* LensQL AI Card */}
                         <div className="bg-white border-2 border-blue-200/90 rounded-3xl p-6 sm:p-9 space-y-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
                             {/* Ambient subtle light blue corner tint */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100/40 rounded-full blur-2xl -z-10 pointer-events-none" />
@@ -625,12 +617,10 @@ export default function LandingPage() {
                             <div>
                                 {/* Header */}
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                        <Flaticon name="eye" type="sr" className="text-xl text-white" />
-                                    </div>
+                                    <LensQLLogo className="w-12 h-12" />
                                     <div>
                                         <h3 className="text-lg sm:text-xl font-bold text-slate-900 leading-snug">
-                                            Vigilant AI
+                                            LensQL AI
                                         </h3>
                                         <span className="inline-block mt-1 px-3 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
                                             Intelligent monitoring
@@ -793,7 +783,7 @@ export default function LandingPage() {
                             Experience Natural Language Video Retrieval
                         </h2>
                         <p className="text-xs text-slate-500">
-                            Click an example forensic query below to see how Vigilant AI indexes and cites visual evidence instantly.
+                            Click an example forensic query below to see how LensQL AI indexes and cites visual evidence instantly.
                         </p>
                     </div>
 
@@ -862,7 +852,7 @@ export default function LandingPage() {
                         Pyramid of Compute: How We Process at Scale
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                        Heavy foundation models cannot run on 30 FPS raw video. Vigilant AI cascades compute across 4 layers to maintain real-time speed at fraction of cloud cost.
+                        Heavy foundation models cannot run on 30 FPS raw video. LensQL AI cascades compute across 4 layers to maintain real-time speed at fraction of cloud cost.
                     </p>
                 </div>
 
@@ -908,7 +898,7 @@ export default function LandingPage() {
                         Transform Your Camera Network Into Autonomous Intelligence.
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
-                        Ready to see how Vigilant AI monitors surveillance footage without human fatigue? Launch the live console or test compute benchmarks.
+                        Ready to see how LensQL AI monitors surveillance footage without human fatigue? Launch the live console or test compute benchmarks.
                     </p>
                     <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3.5">
                         <button
@@ -933,10 +923,8 @@ export default function LandingPage() {
             <footer className="bg-white border-t border-slate-200 py-8 text-xs text-slate-500">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center">
-                            <Flaticon name="shield-check" type="sr" className="text-xs" />
-                        </div>
-                        <span className="font-bold text-slate-800">Vigilant AI · Sentinel Stream</span>
+                        <LensQLLogo className="w-5 h-5" />
+                        <span className="font-bold text-slate-800">LensQL AI · Sentinel Stream</span>
                         <span>© 2026</span>
                     </div>
 

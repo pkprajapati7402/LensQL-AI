@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Flaticon } from '../components/Flaticon'
+import { LensQLLogo } from '../components/LensQLLogo'
 import { api, type ModalBenchmark, type VectorAIBenchmark } from '../api'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -358,9 +359,7 @@ export default function BenchmarkPage() {
                         <Flaticon name="angle-small-left" className="text-base" />
                     </button>
                     <div className="flex items-center gap-3 flex-1">
-                        <div className="w-9 h-9 rounded-xl border border-blue-200 bg-white flex items-center justify-center text-blue-600 shadow-xs shrink-0">
-                            <Flaticon name="shield-check" type="sr" className="text-blue-600 text-sm" />
-                        </div>
+                        <LensQLLogo className="w-9 h-9" />
                         <div>
                             <h1 className="text-base font-bold text-slate-900 tracking-tight">Compute & Retrieval Benchmarks</h1>
                             <p className="text-xs text-slate-400">Live latency and throughput telemetry</p>
@@ -397,7 +396,7 @@ export default function BenchmarkPage() {
                 </div>
 
                 <p className="text-center text-xs text-slate-400 pb-6">
-                    VIGILANT AI · PRODUCTION BENCHMARK TELEMETRY
+                    LENSQL AI · PRODUCTION BENCHMARK TELEMETRY
                 </p>
             </main>
         </div>

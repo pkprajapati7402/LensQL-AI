@@ -1,5 +1,5 @@
 """
-Vigilant-AI — Consolidated Incident Report Generator
+LensQL AI — Consolidated Incident Report Generator
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Produces ONE report per video, regardless of how many individual alert clips fired.
 
@@ -183,7 +183,7 @@ Respond ONLY with raw JSON (no markdown, no code fences):
         "sha256_evidence_hash": sha256_hash,
         "verification_standard": "RFC-3161 Cryptographic Evidence Standard",
         "integrity_status": "Cryptographically Sealed & Tamper-Evident",
-        "forensic_watermark": f"VIGILANT-SEAL-{sha256_hash[:12].upper()}",
+        "forensic_watermark": f"LENSQL-SEAL-{sha256_hash[:12].upper()}",
         "timestamp_utc": datetime.utcnow().isoformat() + "Z",
     }
 
@@ -225,7 +225,7 @@ def report_to_text(report: Dict) -> str:
 
     lines = [
         "=" * 70,
-        "  VIGILANT-AI SECURITY INCIDENT REPORT",
+        "  LENSQL AI SECURITY INCIDENT REPORT",
         "=" * 70,
         f"  Report ID   : {report.get('report_id', 'N/A')}",
         f"  Video       : {report.get('video_name', '')}",
@@ -317,7 +317,7 @@ def report_to_text(report: Dict) -> str:
             "",
         ]
 
-    lines += ["=" * 70, "  END OF REPORT — Vigilant AI Sentinel Stream", "=" * 70]
+    lines += ["=" * 70, "  END OF REPORT — LensQL AI Sentinel Stream", "=" * 70]
     return "\n".join(lines)
 
 
@@ -338,7 +338,7 @@ def report_to_pdf(report: Dict) -> bytes:
     pdf.set_fill_color(18, 18, 28)
     pdf.set_text_color(230, 200, 100)      # amber
     pdf.set_font("Helvetica", "B", 13)
-    pdf.cell(0, 13, "VIGILANT AI - SECURITY INCIDENT REPORT", fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 13, "LENSQL AI - SECURITY INCIDENT REPORT", fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
 
     pdf.set_fill_color(30, 30, 48)
     pdf.set_text_color(160, 160, 190)
@@ -348,7 +348,7 @@ def report_to_pdf(report: Dict) -> bytes:
         0, 6,
         f"Report ID: {report.get('report_id','N/A')}   |   "
         f"Generated: {gen_at}   |   "
-        f"Vigilant AI · Security Intelligence",
+        f"LensQL AI · Security Intelligence",
         fill=True, align="C", new_x="LMARGIN", new_y="NEXT",
     )
     pdf.ln(3)
@@ -479,7 +479,7 @@ def report_to_pdf(report: Dict) -> bytes:
     pdf.ln(4)
     pdf.set_font("Helvetica", "I", 7.5)
     pdf.set_text_color(160, 160, 160)
-    pdf.cell(0, 5, "End of Report - Vigilant AI Sentinel Stream", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 5, "End of Report - LensQL AI Sentinel Stream", align="C", new_x="LMARGIN", new_y="NEXT")
 
     return bytes(pdf.output())
 

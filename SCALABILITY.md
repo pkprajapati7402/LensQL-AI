@@ -1,6 +1,6 @@
-# Vigilant AI — Enterprise Scalability & Real-World Deployment Blueprint
+# LensQL AI — Enterprise Scalability & Real-World Deployment Blueprint
 
-> **A comprehensive technical and commercial guide on scaling Vigilant AI from a prototype into an enterprise-ready Video Surveillance as a Service (VSaaS) platform — illustrated with a practical 5-camera retail/hospitality deployment.**
+> **A comprehensive technical and commercial guide on scaling LensQL AI from a prototype into an enterprise-ready Video Surveillance as a Service (VSaaS) platform — illustrated with a practical 5-camera retail/hospitality deployment.**
 
 ---
 
@@ -35,7 +35,7 @@ Current market CCTV systems (Ring, Nest, Verkada, Hikvision) suffer from two maj
 1. **Dumb Motion Alerts**: They flood owners with dozens of false notifications every day ("Motion detected at 02:14 AM" — caused by a moth or car headlights), leading owners to mute notifications.
 2. **Zero Context or Reasoning**: When a real incident occurs, the camera provides zero understanding. The owner has to scrub through hours of footage to piece together what happened.
 
-**Vigilant AI delivers the "Autonomous Video Analyst"**:
+**LensQL AI delivers the "Autonomous Video Analyst"**:
 - An intelligent layer that plugs into **any existing IP camera (RTSP/ONVIF)**.
 - Combines **instant edge reflexes** (sub-second motion/object triggers) with **deep multimodal LLM reasoning** (what actually occurred, why it matters, and recommended actions).
 - Enables natural language interrogation: the owner talks to their security system like a 24/7 forensic investigator on payroll.
@@ -67,7 +67,7 @@ Imagine **Marcus**, owner of *"Artisan Roast Cafe"*, operating with 5 standard I
 
 ### The Setup & Camera Topology
 
-| Camera | Position | Primary Objective | Vigilant Rule Profile |
+| Camera | Position | Primary Objective | LensQL Rule Profile |
 |---|---|---|---|
 | **Cam 1** | Front Entrance | Foot traffic analytics, after-hours trespassing | Solitary entrance alerts, loitering detection |
 | **Cam 2** | Cash Register / POS | Counter intrusion, till access after close | Bounded polygon geofence over the cash drawer |
@@ -79,7 +79,7 @@ Imagine **Marcus**, owner of *"Artisan Roast Cafe"*, operating with 5 standard I
 
 ### The Two-Tier Alert System (Reflex + Reasoning)
 
-Current CCTV systems force a trade-off: either fast but dumb, or smart but slow. Vigilant AI solves this by deploying a **two-tier pipeline**:
+Current CCTV systems force a trade-off: either fast but dumb, or smart but slow. LensQL AI solves this by deploying a **two-tier pipeline**:
 
 ```
 EVENT OCCURS (e.g., Someone breaks in at 2:15 AM)
@@ -95,7 +95,7 @@ EVENT OCCURS (e.g., Someone breaks in at 2:15 AM)
 - **Engine**: On-premise Edge Hub running adaptive background subtraction + YOLO11-Nano.
 - **Trigger**: Person detected within Cam 2's cash register polygon during `after_hours`.
 - **Output**: Sub-second alert pushed to Marcus's phone via Firebase/APNS or Telegram/WhatsApp:
-  > **🚨 Vigilant Alert: Perimeter Breach Detected**  
+  > **🚨 LensQL Alert: Perimeter Breach Detected**  
   > *Location: Cash Counter (Cam 2) | Time: 02:14:12 AM*  
   > *Motion Score: 0.88 | Person Count: 1*  
   > *(Full AI forensic analysis generating...)*
@@ -114,7 +114,7 @@ EVENT OCCURS (e.g., Someone breaks in at 2:15 AM)
 
 ### Natural Language "Ask Your Store" Interface
 
-Instead of scrubbing through 40 hours of multi-camera video, Marcus opens the Vigilant App and asks natural language questions. Powered by **CLIP ViT-L/14 + Actian VectorAI DB**:
+Instead of scrubbing through 40 hours of multi-camera video, Marcus opens the LensQL App and asks natural language questions. Powered by **CLIP ViT-L/14 + Actian VectorAI DB**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -122,7 +122,7 @@ Instead of scrubbing through 40 hours of multi-camera video, Marcus opens the Vi
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Marcus: "Did the milk supplier drop off the crates this morning?"           │
 │                                                                             │
-│ Vigilant AI (48ms via Actian VectorAI):                                     │
+│ LensQL AI (48ms via Actian VectorAI):                                       │
 │ "Yes. At 06:18 AM, a delivery driver in a blue uniform entered through the  │
 │  back door (Cam 4), placed four crates in the walk-in cooler, and departed  │
 │  at 06:24 AM."                                                              │
@@ -131,7 +131,7 @@ Instead of scrubbing through 40 hours of multi-camera video, Marcus opens the Vi
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ Marcus: "Show me whenever a customer slipped or fell on the patio."         │
 │                                                                             │
-│ Vigilant AI:                                                                │
+│ LensQL AI:                                                                  │
 │ "Found 1 matching event on Cam 5 (Outdoor Patio) on Tuesday at 03:42 PM.   │
 │  Customer slipped near Table 4 due to wet floor. Staff member attended to   │
 │  them within 30 seconds."                                                   │
@@ -144,7 +144,7 @@ Instead of scrubbing through 40 hours of multi-camera video, Marcus opens the Vi
 
 ### Daily Automated Executive Digest
 
-Every night at midnight, Vigilant’s synthesis engine generates an **Executive Operations & Security Digest** for Marcus:
+Every night at midnight, LensQL’s synthesis engine generates an **Executive Operations & Security Digest** for Marcus:
 
 ```markdown
 =====================================================
@@ -171,7 +171,7 @@ Every night at midnight, Vigilant’s synthesis engine generates an **Executive 
 
 ## 3. Enterprise Notification & Incident Dispatch Hub
 
-Surveillance alerts are worthless if they sit unread on a desktop monitor. Vigilant AI deploys a multi-channel automated dispatch engine that delivers alerts where decision-makers actually look:
+Surveillance alerts are worthless if they sit unread on a desktop monitor. LensQL AI deploys a multi-channel automated dispatch engine that delivers alerts where decision-makers actually look:
 
 ### Telegram Live Delivery Architecture (Fully Functional)
 Telegram provides an enterprise-ready, zero-latency notification pipe:
@@ -180,12 +180,12 @@ Telegram provides an enterprise-ready, zero-latency notification pipe:
 - **Operator Channel**: Broadcasts directly to private security personnel or private operator groups in under **500 milliseconds**.
 
 ### WhatsApp Business Cloud API Connector (Meta Graph API)
-In markets like India, Latin America, and Southeast Asia where 95%+ of business communication occurs over WhatsApp, Vigilant includes a dedicated connector architecture for the **Meta Cloud API**:
+In markets like India, Latin America, and Southeast Asia where 95%+ of business communication occurs over WhatsApp, LensQL includes a dedicated connector architecture for the **Meta Cloud API**:
 - **Interactive Action Buttons**: Alerts are delivered as rich WhatsApp Business Template Messages (`security_incident_v1`) featuring interactive response buttons:
   - `[ 🚓 Call Emergency 112 / 911 ]`
   - `[ 🔊 Trigger On-Premise Siren ]`
   - `[ ❌ Dismiss False Alarm ]`
-- **Two-Way Status Loop**: Clicking an action button updates the Vigilant event record in real time, logging who acknowledged the incident and when.
+- **Two-Way Status Loop**: Clicking an action button updates the LensQL event record in real time, logging who acknowledged the incident and when.
 
 ### Slack, Discord & PagerDuty CAD Integration
 - **Slack & Discord**: Webhooks post color-coded incident cards into corporate `#security-operations` or Discord incident rooms.
@@ -208,7 +208,7 @@ flowchart TD
         C4["Cam 4: Back"] --> Switch
         C5["Cam 5: Patio"] --> Switch
         
-        Switch --> EdgeHub["Vigilant Edge Hub\n(Mini-PC / Jetson Orin Nano)"]
+        Switch --> EdgeHub["LensQL Edge Hub\n(Mini-PC / Jetson Orin Nano)"]
         
         subgraph EdgeHubServices["Edge Processing Tasks"]
             Motion["Adaptive Motion Gating\n(Drops 85% dead video)"]
@@ -220,7 +220,7 @@ flowchart TD
 
     Reflex -->|"Sub-second Alert Push"| MobileApp["Marcus's Phone (Mobile App / WhatsApp)"]
 
-    Reflex -->|"Upload Verified Active Clips (10%)"| CloudCore["VIGILANT CLOUD CORE (Camber Cloud GPU)"]
+    Reflex -->|"Upload Verified Active Clips (10%)"| CloudCore["LENSQL CLOUD CORE (Camber Cloud GPU)"]
 
     subgraph CloudCore["CLOUD INTELLIGENCE CORE"]
         Inference["High-Throughput GPU Worker\n(YOLO11-L + CLIP ViT-L/14)"]
@@ -248,7 +248,7 @@ sequenceDiagram
     autonumber
     actor Intruder as Intruder / Anomaly
     participant Cam as CCTV Camera (RTSP)
-    participant Edge as Vigilant Edge Hub
+    participant Edge as LensQL Edge Hub
     participant Phone as Marcus's Phone
     participant Camber as Camber Cloud GPU
     participant Gemini as Gemini 2.5 Flash
@@ -288,7 +288,7 @@ Scaling from 1 cafe (5 cameras) to a chain of 2,000 cafes (10,000 cameras) requi
 
 ### Bandwidth & Compute Optimization (Fog Computing)
 
-| Metric | Naive Cloud Approach (Verkada / AWS) | Vigilant AI Fog Architecture | Savings |
+| Metric | Naive Cloud Approach (Verkada / AWS) | LensQL AI Fog Architecture | Savings |
 |---|---|---|---|
 | **Video Ingestion** | 10,000 cameras streaming 1080p 24/7 to cloud | Edge drops 85% idle video; only 15% active clips stream to cloud | **85% Bandwidth Reduction** |
 | **Cloud GPU Usage** | Continuous decoding & inference on all 10,000 streams | GPUs only process active candidate clips | **90% Cloud GPU Cost Reduction** |
@@ -360,7 +360,7 @@ As footage accumulates across hundreds of stores, the vector store grows to mill
 | **Total Cost of Goods Sold (COGS)** | **~$20.50 / month** | |
 | **Suggested Retail Pricing** | **$79.00 / month** | **Gross Margin: ~74%** |
 
-*Traditional security patrol services charge $300 - $800/month. Vigilant AI provides 10x better coverage at a fraction of the cost.*
+*Traditional security patrol services charge $300 - $800/month. LensQL AI provides 10x better coverage at a fraction of the cost.*
 
 ---
 
@@ -383,7 +383,7 @@ The following high-value enterprise features form our commercial development roa
 
 ### 8.1 Non-Biometric Multi-Camera Re-Identification (Re-ID)
 - **The Vision**: Track a subject as they transition from Parking Lot (Cam 1) $\rightarrow$ Entrance (Cam 2) $\rightarrow$ Cash Counter (Cam 4) across discontinuous, non-overlapping fields of view.
-- **The Moat**: Rather than relying on heavily restricted facial recognition (banned under the EU AI Act and GDPR Article 9), Vigilant extracts **appearance and clothing latent vectors** (color distribution, silhouette height, footwear, backpack embedding).
+- **The Moat**: Rather than relying on heavily restricted facial recognition (banned under the EU AI Act and GDPR Article 9), LensQL extracts **appearance and clothing latent vectors** (color distribution, silhouette height, footwear, backpack embedding).
 - **Architecture**: A temporal graph network links candidate bounding boxes into a unified multi-camera trajectory without biometric data.
 
 ### 8.2 On-Camera NPU & TensorRT INT8 Edge Compilation
@@ -402,7 +402,7 @@ The following high-value enterprise features form our commercial development roa
 - **Zero-Cloud-Bandwidth Idle**: Only sub-kilobyte text events and 768-dim CLIP vectors stream to the cloud under normal conditions. Full-resolution video clips are pulled upstream on-demand only during active Stage C investigations.
 
 ### 8.5 Universal Hardware-Agnostic ONVIF/RTSP Auto-Discovery
-- **The Vision**: Zero-configuration camera onboarding. When the Vigilant Edge Hub is plugged into a commercial PoE switch, it runs WS-Discovery over the local subnet to detect all ONVIF Profile S/G/T compliant cameras, authenticates, and binds streams automatically within 60 seconds.
+- **The Vision**: Zero-configuration camera onboarding. When the LensQL Edge Hub is plugged into a commercial PoE switch, it runs WS-Discovery over the local subnet to detect all ONVIF Profile S/G/T compliant cameras, authenticates, and binds streams automatically within 60 seconds.
 
 ### 8.6 Retail Operations & Heatmap Analytics (Dual-Use Moat)
 - **The Vision**: Transform physical surveillance from a pure security cost center into a high-ROI business intelligence tool.

@@ -1,4 +1,4 @@
-# Vigilant AI — Autonomous Surveillance Intelligence & Semantic Search
+# LensQL AI — Autonomous Surveillance Intelligence & Natural-Language Video Query Engine
 
 > **Transforming passive CCTV cameras into proactive, real-time threat intelligence and natural-language searchable video infrastructure.**
 
@@ -20,9 +20,9 @@ Over **1 billion CCTV cameras** are deployed worldwide today, recording millions
 - **Forensic Video Scrubbing is Slow and Painful**: When an incident occurs (theft, physical assault, intrusion), operators spend hours manually scrubbing timelines across dozens of camera feeds.
 - **CCTV is a Reactive "Dumb Recorder"**: Current video management systems (VMS) act as digital tape recorders that only record crimes rather than proactively flagging threats and extracting queryable knowledge.
 
-**Vigilant AI solves this paradigm.**
+**LensQL AI solves this paradigm.**
 
-Vigilant AI turns raw, unstructured surveillance video streams into **structured, semantically indexed intelligence**. It automatically isolates motion windows, runs high-speed object and anomaly detection, generates forensic descriptions, indexes multi-modal embeddings in **Actian VectorAI DB**, and enables security operators to interrogate hours of footage in plain conversational English through a ChatGPT-style interface with instant sub-second response times.
+LensQL AI turns raw, unstructured surveillance video streams into **structured, semantically indexed intelligence**. It automatically isolates motion windows, runs high-speed object and anomaly detection, generates forensic descriptions, indexes multi-modal embeddings in **Actian VectorAI DB**, and enables security operators to interrogate hours of footage in plain conversational English through a ChatGPT-style interface with instant sub-second response times.
 
 ---
 
@@ -59,13 +59,13 @@ Vigilant AI turns raw, unstructured surveillance video streams into **structured
 4. **Law Enforcement & Forensic Investigation**
    - Eliminates 95% of video scrubbing time. Investigators can ask:
      > *"Show me anyone wearing a black hoodie who entered through the back exit between 2:00 AM and 4:00 AM"*
-     Vigilant retrieves the exact video clips in milliseconds via multi-modal vector search.
+     LensQL retrieves the exact video clips in milliseconds via multi-modal vector search.
 
 ---
 
 ## 🏗️ System Architecture
 
-Vigilant AI employs a **multi-tier hierarchical processing pipeline** designed to balance real-time throughput, GPU resource utilization, and deep reasoning accuracy.
+LensQL AI employs a **multi-tier hierarchical processing pipeline** designed to balance real-time throughput, GPU resource utilization, and deep reasoning accuracy.
 
 ```mermaid
 flowchart TD
@@ -110,9 +110,9 @@ flowchart TD
 ### Architectural Highlights
 
 1. **Adaptive Motion Gating (80% Compute Savings)**:
-   Surveillance cameras frequently record hours of empty rooms or static corridors. Vigilant’s motion-difference gating isolates only active windows, dropping idle frames before any heavy neural network is invoked.
+   Surveillance cameras frequently record hours of empty rooms or static corridors. LensQL’s motion-difference gating isolates only active windows, dropping idle frames before any heavy neural network is invoked.
 2. **Two-Step Dual Verification Engine (Beyond Naive API Wrappers)**:
-   Generic "LLM wrappers" that simply pipe raw video to a cloud API fail in mission-critical surveillance: they suffer from network latency, API rate limits, privacy leaks, and dangerous **visual hallucinations** (e.g., misinterpreting an assault as "playful wrestling" or item concealment as "browsing"). Vigilant deploys a rigorous two-step verification pipeline:
+   Generic "LLM wrappers" that simply pipe raw video to a cloud API fail in mission-critical surveillance: they suffer from network latency, API rate limits, privacy leaks, and dangerous **visual hallucinations** (e.g., misinterpreting an assault as "playful wrestling" or item concealment as "browsing"). LensQL deploys a rigorous two-step verification pipeline:
    - **Step 1 — Local GPU Verification (`Qwen2.5-VL-7B`)**: Runs locally in GPU VRAM (BF16) on raw uncompressed frames. Evaluates physical optical motion, proximity metrics, and extracts ground-truth boolean threat flags (`is_fighting`, `is_stealing`, `is_erratic`). Zero latency, zero data egress.
    - **Step 2 — Semantic Contextual Reasoning (`Google Gemini`)**: Cross-examines the candidate event against situational context, facility type, and after-hours rules to generate an executive forensic narrative.
    - **Consensus & Authority Chain**: Computer vision detections and local VLM flags take precedence over generative text:
@@ -133,7 +133,7 @@ flowchart TD
 
 ## ⚡ Deployment with Camber Cloud GPU
 
-To avoid credit card restrictions associated with serverless providers like Modal while maintaining dedicated NVIDIA GPU acceleration (e.g., NVIDIA L4 / A100), Vigilant AI is designed to run seamlessly on **Camber Cloud GPU** with secure reverse tunneling (ngrok / Cloudflare Tunnel).
+To avoid credit card restrictions associated with serverless providers like Modal while maintaining dedicated NVIDIA GPU acceleration (e.g., NVIDIA L4 / A100), LensQL AI is designed to run seamlessly on **Camber Cloud GPU** with secure reverse tunneling (ngrok / Cloudflare Tunnel).
 
 ```
 ┌────────────────────────────────────────────────────────┐                 ┌─────────────────────────────┐
@@ -328,7 +328,7 @@ npm run dev
 
 > **For an in-depth architectural and commercial deep dive, read [SCALABILITY.md](file:///c:/Users/princ/Documents/GitHub/Vigilant/SCALABILITY.md)**, which details the **5-Camera Cafe Case Study**, two-tier reflex/reasoning alert design, unit economics, edge fog computing, and Kafka/Camber GPU scaling.
 
-To transition Vigilant AI from a single-feed system to an **enterprise-wide Smart City / Multi-Facility Video Management System (VMS)**, the following architectural scaling path is established:
+To transition LensQL AI from a single-feed system to an **enterprise-wide Smart City / Multi-Facility Video Management System (VMS)**, the following architectural scaling path is established:
 
 1. **RTSP / ONVIF Live Stream Ingestion**
    - Replace file uploads with live camera streams via RTSP/WebRTC ingested through GStreamer / FFmpeg pipelines into distributed frame ring buffers.

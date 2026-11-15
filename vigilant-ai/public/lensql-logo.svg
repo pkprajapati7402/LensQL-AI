@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="lensql-grad" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+    <linearGradient id="lensql-glow" x1="16" y1="16" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+    <filter id="subtle-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect x="3" y="3" width="42" height="42" rx="11" fill="url(#lensql-grad)" filter="url(#subtle-shadow)"/>
+  <rect x="3" y="3" width="42" height="42" rx="11" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="1.5"/>
+
+  <!-- Optical Camera Aperture Reticle -->
+  <circle cx="23" cy="23" r="13" stroke="#FFFFFF" stroke-width="1.8" stroke-dasharray="5 2.5" stroke-opacity="0.85"/>
+
+  <!-- Inner Iris Chamber -->
+  <circle cx="23" cy="23" r="8.5" fill="#0B132B" fill-opacity="0.3" stroke="#FFFFFF" stroke-width="2.2"/>
+  <circle cx="23" cy="23" r="4" fill="url(#lensql-glow)"/>
+
+  <!-- Query Lens Tail (LensQL 'Q' Symbol) -->
+  <path d="M28.5 28.5L37 37" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="37" cy="37" r="1.75" fill="#38BDF8"/>
+
+  <!-- Corner HUD Target Sensor Brackets -->
+  <path d="M9 15V10H14" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9"/>
+  <path d="M39 15V10H34" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9"/>
+  <path d="M9 31V36H14" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9"/>
+</svg>

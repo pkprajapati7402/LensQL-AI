@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, ChevronRight, X } from 'lucide-react'
 import { Flaticon } from '../components/Flaticon'
+import { LensQLLogo } from '../components/LensQLLogo'
 import { api, type VideoInfo, type MemoryQueryResult } from '../api'
 
 export default function HomePage() {
@@ -49,15 +50,13 @@ export default function HomePage() {
                             onClick={() => navItemClick('dashboard')}
                             className="cursor-pointer flex items-center gap-3 group"
                         >
-                            <div className="w-9 h-9 rounded-xl border border-blue-200/90 bg-white flex items-center justify-center shadow-xs group-hover:border-blue-400 transition-colors">
-                                <Flaticon name="shield-check" type="sr" className="text-blue-600 text-base" />
-                            </div>
+                            <LensQLLogo className="w-9 h-9" />
                             <div>
                                 <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight group-hover:text-blue-600 transition-colors">
-                                    Vigilant AI
+                                    Lens<span className="text-blue-600">QL</span> <span className="text-xs uppercase px-1.5 py-0.5 rounded bg-blue-100/80 text-blue-700 font-mono tracking-wider font-bold ml-0.5">AI</span>
                                 </h1>
                                 <p className="text-[11px] sm:text-xs text-slate-400 font-normal">
-                                    Sentinel Stream  ·  Computer Vision
+                                    Forensic Query  ·  Neural Surveillance
                                 </p>
                             </div>
                         </div>
@@ -944,7 +943,7 @@ function SettingsView() {
 
 function ActivityLogView({ videos }: { videos: VideoInfo[] }) {
     const logs = [
-        { time: '11:26:19 PM', level: 'INFO', mod: 'SYSTEM', msg: 'Vigilant AI Dashboard initialized successfully.' },
+        { time: '11:26:19 PM', level: 'INFO', mod: 'SYSTEM', msg: 'LensQL AI Dashboard initialized successfully.' },
         { time: '11:25:57 PM', level: 'INFO', mod: 'API-POLL', msg: `Surveillance database synced: ${videos.length} videos detected.` },
         { time: '10:55:28 PM', level: 'INFO', mod: 'TUNNEL', msg: 'Cloudflare Tunnel connected to Colab backend.' },
         { time: '10:48:12 PM', level: 'ALERT', mod: 'VISION', msg: 'Erratic movement flagged in perimeter zone [CAM-01].' },

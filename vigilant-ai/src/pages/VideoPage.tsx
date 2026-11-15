@@ -662,7 +662,7 @@ function ChatPanel({ videoId }: { videoId: string }) {
             } else {
                 setMessages([{
                     id: 'init', role: 'assistant',
-                    text: 'Vigilant AI Forensic Agent ready. Ask specific questions about this surveillance footage, identify subject posture, or query exact timestamps.\n\nSelect a suggestion below or type your inquiry.',
+                    text: 'LensQL AI Forensic Agent ready. Ask specific questions about this surveillance footage, identify subject posture, or query exact timestamps.\n\nSelect a suggestion below or type your inquiry.',
                 }])
             }
         }).catch(() => {
@@ -1673,7 +1673,7 @@ function ChainOfCustodyModal({
     const [copied, setCopied] = useState(false)
     const hash = report?.chain_of_custody?.sha256_evidence_hash || report?.evidence_hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
     const timestamp = report?.chain_of_custody?.timestamp_utc || report?.generated_at || new Date().toISOString()
-    const watermark = report?.chain_of_custody?.forensic_watermark || `VIGILANT-SEAL-${hash.substring(0, 12).toUpperCase()}`
+    const watermark = report?.chain_of_custody?.forensic_watermark || `LENSQL-SEAL-${hash.substring(0, 12).toUpperCase()}`
 
     const handleCopy = () => {
         navigator.clipboard.writeText(hash)
@@ -1738,7 +1738,7 @@ function ChainOfCustodyModal({
                     </div>
 
                     <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-[11px] text-emerald-900 leading-relaxed font-sans">
-                        <span className="font-bold">Courtroom & Insurance Admissibility:</span> Every frame ingested by Vigilant AI is cryptographically sealed at time of analysis. This provides mathematical non-repudiation, preventing generative hallucinations and ensuring legal chain of custody.
+                        <span className="font-bold">Courtroom & Insurance Admissibility:</span> Every frame ingested by LensQL AI is cryptographically sealed at time of analysis. This provides mathematical non-repudiation, preventing generative hallucinations and ensuring legal chain of custody.
                     </div>
                 </div>
 
