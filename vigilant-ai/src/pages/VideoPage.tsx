@@ -727,7 +727,7 @@ function ChatPanel({ videoId }: { videoId: string }) {
                     </span>
                 </div>
                 <span className="text-[11px] font-mono text-slate-400">
-                    CLIP ViT-B/32 · Gemini Consensus
+                    Neural Vision · Multimodal Consensus
                 </span>
             </div>
 

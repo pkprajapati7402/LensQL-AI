@@ -1041,7 +1041,7 @@ def dispatch_telegram_alert(req: TelegramDispatchRequest):
         f"⚠️ *Severity:* *{stage}* (Confidence: `{score}`)\n"
         f"🕒 *Timestamp:* `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}`\n\n"
         f"📋 *Forensic Summary:*\n{summary_text}\n\n"
-        f"🛡️ *Verification:* `Qwen2.5-VL + Gemini Consensus`\n"
+        f"🛡️ *Verification:* `Dual-Stage Neural Consensus Engine`\n"
         f"🔒 *Chain of Custody:* `RFC-3161 Verified`\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"⚡ _Dispatched via Vigilant Enterprise Hub_"

@@ -90,17 +90,17 @@ function ModalSection({ data }: { data: ModalBenchmark | null }) {
                     Neural Network Stack · VRAM Allocation (40 GB)
                 </p>
                 <div className="h-6 bg-slate-200 rounded-lg overflow-hidden flex mb-3 border border-slate-300/60">
-                    <div className="h-full bg-orange-500" style={{ width: '5%' }} title="YOLO11-L ~2GB" />
+                    <div className="h-full bg-orange-500" style={{ width: '5%' }} title="Vision Tracker ~2GB" />
                     <div className="h-full bg-cyan-500" style={{ width: '3.75%' }} title="CLIP ViT-L/14 ~1.5GB" />
-                    <div className="h-full bg-purple-500" style={{ width: '38.75%' }} title="Qwen2.5-VL-7B ~15.5GB" />
+                    <div className="h-full bg-purple-500" style={{ width: '38.75%' }} title="Multimodal VLM ~15.5GB" />
                     <div className="h-full bg-slate-100 flex-1" title="Free ~21GB" />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     {[
-                        { color: 'bg-orange-500', label: 'YOLO11-L',       vram: '~2 GB',    task: 'Object Tracking' },
-                        { color: 'bg-cyan-500',   label: 'CLIP ViT-L/14',  vram: '~1.5 GB',  task: '768-dim Embeddings' },
-                        { color: 'bg-purple-500', label: 'Qwen2.5-VL-7B', vram: '~15.5 GB', task: 'Vision Captioning' },
-                        { color: 'bg-slate-300',  label: 'Free Headroom',  vram: '~21 GB',   task: 'Dynamic Batching' },
+                        { color: 'bg-orange-500', label: 'Vision Tracker',   vram: '~2 GB',    task: 'Object Tracking' },
+                        { color: 'bg-cyan-500',   label: 'CLIP ViT-L/14',    vram: '~1.5 GB',  task: '768-dim Embeddings' },
+                        { color: 'bg-purple-500', label: 'Multimodal VLM',   vram: '~15.5 GB', task: 'Vision Captioning' },
+                        { color: 'bg-slate-300',  label: 'Free Headroom',    vram: '~21 GB',   task: 'Dynamic Batching' },
                     ].map(({ color, label, vram, task }) => (
                         <div key={label} className="flex items-start gap-2">
                             <div className={`w-2.5 h-2.5 rounded-sm ${color} shrink-0 mt-0.5`} />
@@ -213,8 +213,8 @@ function ModalSection({ data }: { data: ModalBenchmark | null }) {
                     {[
                         { icon: <Flaticon name="code-branch" className="text-xs text-slate-500" />,  label: 'CPU Motion Phase',   value: 'chunk_and_score()' },
                         { icon: <Flaticon name="bolt" type="sr" className="text-xs text-blue-600" />,      label: 'GPU Inference Phase', value: 'FeatureExtractor()' },
-                        { icon: <Flaticon name="chip" type="sr" className="text-xs text-purple-600" />,    label: 'Object Detection',    value: 'YOLO11 + CLIP ViT-L' },
-                        { icon: <Flaticon name="brain" type="sr" className="text-xs text-emerald-600" />,  label: 'Forensic Synthesis',  value: 'Gemini 3.5 Multimodal' },
+                        { icon: <Flaticon name="chip" type="sr" className="text-xs text-purple-600" />,    label: 'Object Detection',    value: 'Neural Vision + CLIP' },
+                        { icon: <Flaticon name="brain" type="sr" className="text-xs text-emerald-600" />,  label: 'Forensic Synthesis',  value: 'Dual Multimodal AI' },
                     ].map(({ icon, label, value }) => (
                         <div key={label} className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
                             <div className="flex items-center gap-1.5 text-slate-500">

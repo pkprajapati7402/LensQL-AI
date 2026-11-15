@@ -544,7 +544,7 @@ function AlertsView({ videos, onSelectVideo }: { videos: VideoInfo[]; onSelectVi
             camera: videos[0]?.name || 'CAM-02 Warehouse Gate',
             videoId: videos[0]?.id || '',
             timestamp: '02:40 – 02:48',
-            description: 'Transient velocity spike detected across zone boundary. YOLO11 classified subject as adult person.',
+            description: 'Transient velocity spike detected across zone boundary. Neural vision classified subject as adult person.',
             severity: 'normal' as const,
         },
     ]
@@ -560,7 +560,7 @@ function AlertsView({ videos, onSelectVideo }: { videos: VideoInfo[]; onSelectVi
                         <h2 className="text-lg font-bold text-slate-900">Security Threat Alerts Center</h2>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
-                        High-priority threat windows flagged by YOLO11 motion heuristics and Gemini multimodal reasoning.
+                        High-priority threat windows flagged by neural motion heuristics and multimodal behavioral reasoning.
                     </p>
                 </div>
 
@@ -648,7 +648,7 @@ function EventsView({ videos, onSelectVideo }: { videos: VideoInfo[]; onSelectVi
                     <h2 className="text-lg font-bold text-slate-900">Computer Vision Events Stream</h2>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                    Temporal motion tracklets, bounding box classifications, and spatial velocity vectors extracted by YOLO11.
+                    Temporal motion tracklets, bounding box classifications, and spatial velocity vectors extracted by Edge Vision Engine.
                 </p>
             </div>
 
@@ -827,7 +827,7 @@ function ComputeView({ totalTime, onGoBenchmarks }: { totalTime: number; onGoBen
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">CV Pipeline</span>
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">GPU</span>
                     </div>
-                    <p className="text-xl font-bold text-slate-900">YOLO11 Nano</p>
+                    <p className="text-xl font-bold text-slate-900">Edge Vision Core</p>
                     <p className="text-xs text-slate-400 mt-1">18.2ms / frame (55 FPS)</p>
                 </div>
 
@@ -836,7 +836,7 @@ function ComputeView({ totalTime, onGoBenchmarks }: { totalTime: number; onGoBen
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Multimodal AI</span>
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">LIVE</span>
                     </div>
-                    <p className="text-xl font-bold text-slate-900">Gemini 2.5 Flash</p>
+                    <p className="text-xl font-bold text-slate-900">Multimodal AI Core</p>
                     <p className="text-xs text-slate-400 mt-1">1.14s forensic synthesis latency</p>
                 </div>
 
@@ -874,7 +874,7 @@ function SettingsView() {
                     <h2 className="text-lg font-bold text-slate-900">System & Detection Settings</h2>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                    Manage backend API tunnels, YOLO11 sensitivity thresholds, and forensic LLM parameters.
+                    Manage backend API tunnels, motion sensitivity thresholds, and forensic reasoning parameters.
                 </p>
             </div>
 
@@ -898,7 +898,7 @@ function SettingsView() {
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            YOLO11 Detection Confidence Threshold: {yoloConf}
+                            Vision Detection Confidence Threshold: {yoloConf}
                         </label>
                     </div>
                     <input
@@ -924,8 +924,8 @@ function SettingsView() {
                         onChange={e => setModel(e.target.value)}
                         className="w-full text-sm text-slate-800 border border-slate-200 rounded-xl px-4 py-2.5 focus:border-blue-500 outline-none bg-white"
                     >
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended · 1.1s Latency)</option>
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Forensic Synthesis)</option>
+                        <option value="gemini-2.5-flash">Enterprise Ultra-Fast (Recommended · 1.1s Latency)</option>
+                        <option value="gemini-1.5-pro">Deep Forensic Extended Analysis</option>
                     </select>
                 </div>
 
@@ -955,8 +955,8 @@ function ActivityLogView({ videos }: { videos: VideoInfo[] }) {
         { time: '11:26:19 PM', level: 'INFO', mod: 'SYSTEM', msg: 'Vigilant AI Dashboard initialized successfully.' },
         { time: '11:25:57 PM', level: 'INFO', mod: 'API-POLL', msg: `Surveillance database synced: ${videos.length} videos detected.` },
         { time: '10:55:28 PM', level: 'INFO', mod: 'TUNNEL', msg: 'Cloudflare Tunnel connected to Colab backend.' },
-        { time: '10:48:12 PM', level: 'ALERT', mod: 'YOLO11', msg: 'Erratic movement flagged in perimeter zone [CAM-01].' },
-        { time: '10:42:01 PM', level: 'INFO', mod: 'GEMINI', msg: 'Gemini forensic reasoning stream completed in 1.12s.' },
+        { time: '10:48:12 PM', level: 'ALERT', mod: 'VISION', msg: 'Erratic movement flagged in perimeter zone [CAM-01].' },
+        { time: '10:42:01 PM', level: 'INFO', mod: 'FORENSIC-AI', msg: 'Multimodal forensic reasoning stream completed in 1.12s.' },
     ]
 
     return (
@@ -1263,7 +1263,7 @@ function UploadModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
                     setProcessingStatus(
                         status.status === 'uploading'  ? 'Uploading to processing server...' :
                         status.status === 'processing' ? `Analyzing video subclips... ${status.progress}%` :
-                        status.status === 'analyzing'  ? 'Gemini 3.5 forensic synthesis in progress...' :
+                        status.status === 'analyzing'  ? 'Forensic multimodal synthesis in progress...' :
                         status.status === 'done'       ? 'Analysis complete!' :
                         status.status === 'error'      ? `Error: ${status.error}` : 'Queued...'
                     )
@@ -1312,7 +1312,7 @@ function UploadModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
                             />
                         </div>
                         <p className="text-[11px] text-slate-400 text-center">
-                            YOLO11 is running tracklet extraction and Gemini is classifying alerts.
+                            Extracting motion tracklets and evaluating forensic behavioral alerts.
                         </p>
                     </div>
                 ) : (
