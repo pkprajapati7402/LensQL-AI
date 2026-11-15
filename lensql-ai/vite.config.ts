@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.VITE_BACKEND_URL || 'https://pretty-workplace-leisure-threatening.trycloudflare.com',
+        target: process.env.VITE_BACKEND_URL || 'https://count-camcorder-brochures-pitch.trycloudflare.com',
         changeOrigin: true,
         secure: false,
       },

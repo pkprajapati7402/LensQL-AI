@@ -1195,6 +1195,9 @@ function GeofencePanel({
     const [isArmed, setIsArmed] = useState(true)
     const [hoverCoords, setHoverCoords] = useState<{ x: number, y: number }>({ x: 50, y: 50 })
     const [draggedPointIdx, setDraggedIdx] = useState<number | null>(null)
+    const [hoveredPointIdx, setHoveredIdx] = useState<number | null>(null)
+    const canvasRef = useRef<HTMLDivElement>(null)
+    const justDraggedRef = useRef(false)
 
     const activePoints = customPoints.length >= 3 ? customPoints : selectedPreset.points
     const svgPoints = activePoints.map(([x, y]) => `${x}%,${y}%`).join(' ')
@@ -1203,31 +1206,59 @@ function GeofencePanel({
         ? (!feedError ? api.videoFrameUrl(videoId) : '/cam-entrance.jpg')
         : (CAMERA_FEEDS.find(c => c.id === selectedFeed)?.src || '/cam-entrance.jpg')
 
-    const getCanvasPercentage = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect()
-        const x = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)))
-        const y = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 100)))
+    const getCanvasCoords = (clientX: number, clientY: number) => {
+        if (!canvasRef.current) return { x: 50, y: 50 }
+        const rect = canvasRef.current.getBoundingClientRect()
+        const x = Math.max(0, Math.min(100, Math.round(((clientX - rect.left) / rect.width) * 100)))
+        const y = Math.max(0, Math.min(100, Math.round(((clientY - rect.top) / rect.height) * 100)))
         return { x, y }
     }
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const coords = getCanvasPercentage(e)
+    const handlePointPointerDown = (idx: number, e: React.PointerEvent<SVGGElement>) => {
+        e.stopPropagation()
+        e.preventDefault()
+        setDraggedIdx(idx)
+        justDraggedRef.current = false
+        try {
+            ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+        } catch {}
+    }
+
+    const handlePointPointerMove = (idx: number, e: React.PointerEvent<SVGGElement>) => {
+        if (draggedPointIdx !== idx) return
+        e.stopPropagation()
+        e.preventDefault()
+        justDraggedRef.current = true
+        const coords = getCanvasCoords(e.clientX, e.clientY)
         setHoverCoords(coords)
-        if (draggedPointIdx !== null) {
-            setCustomPoints(prev => {
-                const base = prev.length >= 3 ? [...prev] : [...selectedPreset.points]
-                base[draggedPointIdx] = [coords.x, coords.y]
-                return base
-            })
+        setCustomPoints(prev => {
+            const base = prev.length >= 3 ? [...prev] : [...selectedPreset.points]
+            base[idx] = [coords.x, coords.y]
+            return base
+        })
+    }
+
+    const handlePointPointerUp = (idx: number, e: React.PointerEvent<SVGGElement>) => {
+        if (draggedPointIdx === idx) {
+            e.stopPropagation()
+            e.preventDefault()
+            setDraggedIdx(null)
+            try {
+                ;(e.currentTarget as Element).releasePointerCapture(e.pointerId)
+            } catch {}
+            setTimeout(() => {
+                justDraggedRef.current = false
+            }, 80)
         }
     }
 
     const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (draggedPointIdx !== null) {
+        if (draggedPointIdx !== null || justDraggedRef.current) {
             setDraggedIdx(null)
+            justDraggedRef.current = false
             return
         }
-        const { x, y } = getCanvasPercentage(e)
+        const { x, y } = getCanvasCoords(e.clientX, e.clientY)
         if (mode === 'landmark' && isAddingLandmark) {
             setLandmarks(prev => [
                 ...prev,
@@ -1398,9 +1429,14 @@ function GeofencePanel({
 
                 {/* CCTV Calibration Screen Canvas */}
                 <div
+                    ref={canvasRef}
                     onClick={handleCanvasClick}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={() => setDraggedIdx(null)}
+                    onMouseMove={(e) => {
+                        if (draggedPointIdx === null) {
+                            const coords = getCanvasCoords(e.clientX, e.clientY)
+                            setHoverCoords(coords)
+                        }
+                    }}
                     className={`relative w-full h-[380px] sm:h-[460px] bg-slate-950 overflow-hidden select-none ${
                         isDrawing || isAddingLandmark ? 'cursor-crosshair' : 'cursor-default'
                     }`}
@@ -1430,7 +1466,7 @@ function GeofencePanel({
                     <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-cyan-400/70 pointer-events-none" />
 
                     {/* SVG Interactive Geofence Polygon */}
-                    <svg className="absolute inset-0 w-full h-full">
+                    <svg className="absolute inset-0 w-full h-full overflow-visible">
                         <polygon
                             points={svgPoints}
                             fill={isEnforcing ? 'rgba(239, 68, 68, 0.45)' : `${selectedPreset.color}30`}
@@ -1439,34 +1475,61 @@ function GeofencePanel({
                             strokeDasharray={isEnforcing ? 'none' : '6 4'}
                             className={isEnforcing ? 'animate-pulse' : 'transition-colors'}
                         />
-                        {activePoints.map(([x, y], idx) => (
-                            <g key={idx}>
-                                <circle
-                                    cx={`${x}%`}
-                                    cy={`${y}%`}
-                                    r={draggedPointIdx === idx ? '7' : '5'}
-                                    fill={draggedPointIdx === idx ? '#38bdf8' : '#ffffff'}
-                                    stroke={isEnforcing ? '#ef4444' : selectedPreset.color}
-                                    strokeWidth="2.5"
-                                    className="cursor-move hover:scale-125 transition-transform"
-                                    onMouseDown={(e) => {
-                                        e.stopPropagation()
-                                        setDraggedIdx(idx)
-                                    }}
-                                />
-                                <text
-                                    x={`${x}%`}
-                                    y={`${y - 3}%`}
-                                    fill="#ffffff"
-                                    fontSize="10"
-                                    fontFamily="monospace"
-                                    textAnchor="middle"
-                                    className="pointer-events-none font-bold select-none drop-shadow"
+                        {activePoints.map(([x, y], idx) => {
+                            const isDragged = draggedPointIdx === idx
+                            const isHovered = hoveredPointIdx === idx
+                            return (
+                                <g
+                                    key={idx}
+                                    className="cursor-grab active:cursor-grabbing select-none"
+                                    onPointerDown={(e) => handlePointPointerDown(idx, e)}
+                                    onPointerMove={(e) => handlePointPointerMove(idx, e)}
+                                    onPointerUp={(e) => handlePointPointerUp(idx, e)}
+                                    onPointerCancel={(e) => handlePointPointerUp(idx, e)}
+                                    onPointerEnter={() => setHoveredIdx(idx)}
+                                    onPointerLeave={() => setHoveredIdx(null)}
                                 >
-                                    P{idx + 1}
-                                </text>
-                            </g>
-                        ))}
+                                    {/* Invisible 32px grab area to prevent losing pointer focus */}
+                                    <circle cx={`${x}%`} cy={`${y}%`} r="16" fill="transparent" />
+
+                                    {/* Outer glow ring when hovered or dragged — stationary, no transform displacement */}
+                                    {(isDragged || isHovered) && (
+                                        <circle
+                                            cx={`${x}%`}
+                                            cy={`${y}%`}
+                                            r={isDragged ? "13" : "11"}
+                                            fill="none"
+                                            stroke={isDragged ? "#38bdf8" : selectedPreset.color}
+                                            strokeWidth="2"
+                                            strokeOpacity={isDragged ? "0.8" : "0.5"}
+                                        />
+                                    )}
+
+                                    {/* Core coordinate dot */}
+                                    <circle
+                                        cx={`${x}%`}
+                                        cy={`${y}%`}
+                                        r={isDragged ? "7" : isHovered ? "6.5" : "5.5"}
+                                        fill={isDragged ? "#38bdf8" : isHovered ? "#fef08a" : "#ffffff"}
+                                        stroke={isEnforcing ? "#ef4444" : selectedPreset.color}
+                                        strokeWidth="2.5"
+                                    />
+
+                                    {/* Coordinate point label */}
+                                    <text
+                                        x={`${x}%`}
+                                        y={`${Math.max(y - 3, 3)}%`}
+                                        fill="#ffffff"
+                                        fontSize="10"
+                                        fontFamily="monospace"
+                                        textAnchor="middle"
+                                        className="pointer-events-none font-bold select-none drop-shadow"
+                                    >
+                                        P{idx + 1}
+                                    </text>
+                                </g>
+                            )
+                        })}
                     </svg>
 
                     {/* Labeled Physical Landmarks Pinned on the Frame */}

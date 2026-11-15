@@ -121,9 +121,11 @@ def send_telegram_incident_alert(
 ) -> dict:
     """
     Core function to dispatch incident alerts directly to Telegram via the Bot API.
-    Can use user-supplied credentials or environment variables TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.
+    Uses HTML formatting with HTML escaping to prevent Telegram markdown entity parsing failures.
+    Includes automatic plain-text retry fallback.
     """
     import requests
+    import html
     from datetime import datetime
 
     token = (bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip()
@@ -144,24 +146,30 @@ def send_telegram_incident_alert(
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
-    text = (
-        f"🚨 *LENSQL AI — SECURITY INCIDENT DISPATCH*\n"
+    timestamp_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+    safe_label = html.escape(str(label))
+    safe_stg = html.escape(str(stg))
+    safe_sc = html.escape(str(sc))
+    safe_summary = html.escape(str(summary))
+
+    html_text = (
+        f"🚨 <b>LENSQL AI — SECURITY INCIDENT DISPATCH</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🎥 *Source:* `{label}`\n"
-        f"⚠️ *Severity:* *{stg}* (Confidence: `{sc}`)\n"
-        f"🕒 *Timestamp:* `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}`\n\n"
-        f"📋 *Forensic Summary:*\n{summary}\n\n"
-        f"🛡️ *Verification:* `Dual-Stage Neural Consensus Engine`\n"
-        f"🔒 *Chain of Custody:* `RFC-3161 Verified`\n"
+        f"🎥 <b>Source:</b> <code>{safe_label}</code>\n"
+        f"⚠️ <b>Severity:</b> <b>{safe_stg}</b> (Confidence: <code>{safe_sc}</code>)\n"
+        f"🕒 <b>Timestamp:</b> <code>{timestamp_str}</code>\n\n"
+        f"📋 <b>Forensic Summary:</b>\n{safe_summary}\n\n"
+        f"🛡️ <b>Verification:</b> <code>Dual-Stage Neural Consensus Engine</code>\n"
+        f"🔒 <b>Chain of Custody:</b> <code>RFC-3161 Verified</code>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⚡ _Dispatched via LensQL Enterprise Hub_"
+        f"⚡ <i>Dispatched via LensQL Enterprise Hub</i>"
     )
 
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
         "chat_id": target_chat,
-        "text": text,
-        "parse_mode": "Markdown",
+        "text": html_text,
+        "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }
 
@@ -169,11 +177,42 @@ def send_telegram_incident_alert(
         resp = requests.post(url, json=payload, timeout=10)
         data = resp.json()
         if not resp.ok or not data.get("ok"):
-            error_desc = data.get("description", "Unknown Telegram error")
+            error_desc = data.get("description", "")
+            # Auto-fallback: if entity parse error, retry with unformatted plain text
+            if "entity" in error_desc.lower() or "parse" in error_desc.lower():
+                plain_text = (
+                    f"🚨 LENSQL AI — SECURITY INCIDENT DISPATCH\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🎥 Source: {label}\n"
+                    f"⚠️ Severity: {stg} (Confidence: {sc})\n"
+                    f"🕒 Timestamp: {timestamp_str}\n\n"
+                    f"📋 Forensic Summary:\n{summary}\n\n"
+                    f"🛡️ Verification: Dual-Stage Neural Consensus Engine\n"
+                    f"🔒 Chain of Custody: RFC-3161 Verified\n"
+                    f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"⚡ Dispatched via LensQL Enterprise Hub"
+                )
+                retry_payload = {
+                    "chat_id": target_chat,
+                    "text": plain_text,
+                    "disable_web_page_preview": True,
+                }
+                retry_resp = requests.post(url, json=retry_payload, timeout=10)
+                retry_data = retry_resp.json()
+                if retry_resp.ok and retry_data.get("ok"):
+                    return {
+                        "status": "ok",
+                        "delivered": True,
+                        "channel": "telegram",
+                        "message_id": retry_data.get("result", {}).get("message_id"),
+                        "message": f"Alert successfully dispatched to Telegram chat {target_chat}!",
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+
             return {
                 "status": "error",
                 "delivered": False,
-                "error": error_desc,
+                "error": error_desc or "Unknown Telegram error",
                 "message": f"Telegram API Error: {error_desc}",
             }
         return {
