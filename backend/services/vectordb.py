@@ -1,5 +1,5 @@
 """
-Vigilant-AI — Actian VectorAI DB Service
+LensQL AI — Actian VectorAI DB Service
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Wraps the actiancortex Python client for:
   - Storing CLIP embeddings (768-dim) per event

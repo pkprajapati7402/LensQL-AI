@@ -1,5 +1,5 @@
 """
-Vigilant-AI — Data Models
+LensQL AI — Data Models
 Dataclasses for the pipeline stages. Using plain dataclasses (not Pydantic)
 so they work inside Modal containers without extra deps.
 """

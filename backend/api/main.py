@@ -1010,7 +1010,9 @@ def video_frame(video_id: str):
                     pass
 
     # Fallback to realistic CCTV perspective presets in public folder
-    public_dir = Path(__file__).resolve().parent.parent.parent / "vigilant-ai" / "public"
+    public_dir = Path(__file__).resolve().parent.parent.parent / "lensql-ai" / "public"
+    if not public_dir.exists():
+        public_dir = Path(__file__).resolve().parent.parent.parent / "vigilant-ai" / "public"
     candidates = [
         public_dir / "cam-entrance.jpg",
         public_dir / "cam-warehouse.jpg",

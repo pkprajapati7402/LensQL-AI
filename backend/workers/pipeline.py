@@ -1,5 +1,5 @@
 """
-Vigilant-AI — Pipeline Helpers
+LensQL AI — Pipeline Helpers
 Pure-Python utilities (no Modal, no GPU deps) for:
   - Active window detection from motion scores
   - IoU / contact scoring

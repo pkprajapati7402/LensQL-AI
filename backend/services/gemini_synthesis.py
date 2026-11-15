@@ -1,5 +1,5 @@
 """
-Vigilant-AI — Gemini Synthesis Service
+LensQL AI — Gemini Synthesis Service
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 The "brain" layer. Takes clip-level events from Modal and produces:
   1. Holistic video summary (what actually happened)

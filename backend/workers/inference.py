@@ -1,5 +1,5 @@
 """
-Vigilant-AI — Modal Pipeline
+LensQL AI — Modal Pipeline
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Layer 0  │ Chunker + Motion Scorer        │ Modal CPU  (parallel, one per 5-min chunk)
 Layer 1  │ Quality Gate                   │ (inside Layer 0)

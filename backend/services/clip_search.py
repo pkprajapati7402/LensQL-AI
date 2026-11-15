@@ -1,5 +1,5 @@
 """
-Vigilant-AI — CLIP Semantic Search Service
+LensQL AI — CLIP Semantic Search Service
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Smart search over video events. Uses a multi-strategy approach:
 

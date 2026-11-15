@@ -1,5 +1,5 @@
 """
-Vigilant-AI — Supermemory Cross-Video Intelligence
+LensQL AI — Supermemory Cross-Video Intelligence
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Uses Supermemory Context Engineering API to build persistent intelligence
 across ALL processed videos — not just within one recording.
@@ -95,7 +95,7 @@ def store_video_intelligence(
         )[:5]
     )
 
-    content = f"""VIGILANT-AI VIDEO INTELLIGENCE RECORD
+    content = f"""LENSQL-AI VIDEO INTELLIGENCE RECORD
 
 Video: {video_name}
 Video ID: {video_id}

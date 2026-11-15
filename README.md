@@ -293,12 +293,12 @@ Once your backend is running (locally or through a Cloudflare/ngrok tunnel):
 
 1. **Navigate to the frontend directory**:
    ```bash
-   cd LensQL-AI/vigilant-ai
+   cd LensQL-AI/lensql-ai
    npm install
    ```
 
 2. **Configure the Backend URL**:
-   Set `VITE_BACKEND_URL` in your terminal or inside `vigilant-ai/vite.config.ts`:
+   Set `VITE_BACKEND_URL` in your terminal or inside `lensql-ai/vite.config.ts`:
    ```bash
    # If running backend via Cloudflare Tunnel (Colab / Camber Cloud):
    export VITE_BACKEND_URL=https://your-unique-subdomain.trycloudflare.com
@@ -366,7 +366,7 @@ LensQL-AI/
 │   ├── uploads/                 # Temporary streaming buffer for raw video files
 │   └── requirements.txt         # Python dependencies
 │
-├── vigilant-ai/                 # React 19 Client
+├── lensql-ai/                   # React 19 Client
 │   ├── src/
 │   │   ├── pages/
 │   │   │   ├── HomePage.tsx     # Surveillance feed grid & global cross-camera search
@@ -418,7 +418,7 @@ uvicorn api.main:app --reload --port 8000
 
 ### 3. Launch Frontend
 ```bash
-cd ../vigilant-ai
+cd ../lensql-ai
 npm install
 npm run dev
 # Open http://localhost:5173
