@@ -130,11 +130,59 @@ Respond ONLY with raw JSON (no markdown, no code fences):
 }}"""
 
     report_data = {}
-    try:
-        raw = _call_gemini(prompt, max_tokens=1500)
-        report_data = _parse_gemini_json(raw)
-    except Exception as exc:
-        print(f"[incident_report] Gemini call notice: {exc}")
+
+    # ── Fast Path: If video synthesis already exists, build report immediately ─
+    # Prevents duplicate LLM calls, avoids rate-limit retries, and eliminates Cloudflare 524 timeouts.
+    if synthesis and synthesis.get("summary") and not synthesis.get("summary").startswith("Video '"):
+        highest_stage = "C" if stage_c_count > 0 else ("B" if alerts else "A")
+        fallback_sev = "critical" if highest_stage == "C" else (synthesis.get("risk_level") or ("high" if alerts else "low"))
+        intent_list = synthesis.get("intent") or []
+        first_intent = intent_list[0] if intent_list else (labels[0] if labels else "surveillance_event")
+        if isinstance(first_intent, str) and first_intent.startswith("#"):
+            first_intent = first_intent[1:]
+
+        km_list = []
+        for km in (synthesis.get("key_moments") or []):
+            if isinstance(km, dict) and km.get("description"):
+                km_list.append({"time": str(km.get("time") or km.get("timestamp") or "0:00"), "description": km.get("description")})
+        if not km_list:
+            km_list = [
+                {"time": _fmt_time(e.get("start", 0)), "description": _safe_caption(e) or f"Stage-{_get_stage(e)} alert triggered"}
+                for e in evidence_clips[:5]
+            ]
+
+        report_data = {
+            "title": f"Forensic Incident Report: {video_name}",
+            "classification": first_intent,
+            "severity": fallback_sev,
+            "executive_summary": synthesis.get("summary"),
+            "incident_window": {"start": _fmt_time(incident_start), "end": _fmt_time(incident_end), "duration_s": duration_s},
+            "parties": {
+                "total_persons": max_people,
+                "perpetrators_estimated": 1 if alerts else 0,
+                "victims_estimated": max(0, max_people - 1),
+                "note": f"Visual tracking indicates {max_people} individual(s) detected in sector."
+            },
+            "key_moments": km_list,
+            "physical_indicators": {
+                "contact_detected": max_contact > 0.3,
+                "max_contact_score": float(max_contact),
+                "sustained": duration_s > 60
+            },
+            "recommendations": [
+                "Preserve local NVR video segment and LensQL cryptographic chain-of-custody seal.",
+                "Verify suspect identification with perimeter physical security logs.",
+                "Dispatch alert documentation to designated response team."
+            ]
+        }
+    else:
+        # If no prior synthesis exists, attempt a quick single Gemini call without long retries
+        try:
+            from services.gemini_synthesis import _call_gemini_once
+            raw = _call_gemini_once(prompt)
+            report_data = _parse_gemini_json(raw)
+        except Exception as exc:
+            print(f"[incident_report] Gemini call notice: {exc}")
 
     # Fallback if Gemini returned empty, errored, or lacks summary
     if not report_data or not report_data.get("executive_summary"):

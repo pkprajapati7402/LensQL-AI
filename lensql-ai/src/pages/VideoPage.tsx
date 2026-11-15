@@ -152,8 +152,16 @@ export default function VideoPage() {
                                     try {
                                         const res = await fetch(api.videoReportTextUrl(videoId))
                                         if (!res.ok) {
-                                            const errText = await res.text().catch(() => '')
-                                            throw new Error(`HTTP ${res.status}: ${errText || 'Failed to download report'}`)
+                                            const rawErr = await res.text().catch(() => '')
+                                            let cleanMsg = `HTTP ${res.status}`
+                                            if (res.status === 524) {
+                                                cleanMsg = 'Cloudflare tunnel connection timed out (Error 524). Please retry.'
+                                            } else if (rawErr.includes('<html') || rawErr.includes('<!DOCTYPE')) {
+                                                cleanMsg = `Server error (HTTP ${res.status}).`
+                                            } else if (rawErr) {
+                                                cleanMsg = `HTTP ${res.status}: ${rawErr.slice(0, 150)}`
+                                            }
+                                            throw new Error(cleanMsg)
                                         }
                                         const blob = await res.blob()
                                         const blobUrl = URL.createObjectURL(blob)
@@ -185,8 +193,16 @@ export default function VideoPage() {
                                     try {
                                         const res = await fetch(api.videoReportPdfUrl(videoId))
                                         if (!res.ok) {
-                                            const errText = await res.text().catch(() => '')
-                                            throw new Error(`HTTP ${res.status}: ${errText || 'Failed to download PDF'}`)
+                                            const rawErr = await res.text().catch(() => '')
+                                            let cleanMsg = `HTTP ${res.status}`
+                                            if (res.status === 524) {
+                                                cleanMsg = 'Cloudflare tunnel connection timed out (Error 524). Please retry.'
+                                            } else if (rawErr.includes('<html') || rawErr.includes('<!DOCTYPE')) {
+                                                cleanMsg = `Server error (HTTP ${res.status}).`
+                                            } else if (rawErr) {
+                                                cleanMsg = `HTTP ${res.status}: ${rawErr.slice(0, 150)}`
+                                            }
+                                            throw new Error(cleanMsg)
                                         }
                                         const blob = await res.blob()
                                         const blobUrl = URL.createObjectURL(blob)
@@ -199,7 +215,7 @@ export default function VideoPage() {
                                         URL.revokeObjectURL(blobUrl)
                                     } catch (err: any) {
                                         console.error('PDF report error:', err)
-                                        alert(`Failed to download PDF: ${err?.message || 'Server error'}. Please verify backend server is running.`)
+                                        alert(err?.message || 'Failed to download PDF report.')
                                     } finally {
                                         setPdfLoading(false)
                                     }
