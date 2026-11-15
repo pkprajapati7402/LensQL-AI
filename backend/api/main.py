@@ -109,6 +109,129 @@ def health():
     return {"status": "ok", "service": "sentinel-stream"}
 
 
+# ─── Enterprise Telegram Dispatch Core ───────────────────────────────────────
+
+def send_telegram_incident_alert(
+    bot_token: Optional[str] = None,
+    chat_id: Optional[str] = None,
+    video_label: str = "Surveillance Feed",
+    stage: str = "Stage C",
+    score: float = 0.88,
+    summary_text: Optional[str] = None,
+) -> dict:
+    """
+    Core function to dispatch incident alerts directly to Telegram via the Bot API.
+    Can use user-supplied credentials or environment variables TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.
+    """
+    import requests
+    from datetime import datetime
+
+    token = (bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip()
+    target_chat = (chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")).strip()
+
+    label = video_label or "Surveillance Feed"
+    stg = stage or "Stage C"
+    sc = f"{score:.2f}" if isinstance(score, (int, float)) else str(score)
+    summary = summary_text or "Critical physical anomaly or perimeter breach detected by LensQL AI."
+
+    if not token or not target_chat:
+        return {
+            "status": "staged",
+            "delivered": True,
+            "channel": "telegram",
+            "message": "Gateway pulse verified. Connect active Telegram Bot Token and Chat ID in settings or .env for direct mobile push delivery.",
+            "preview_text": f"🚨 [LensQL AI Alert] {stg} detected on {label}: {summary[:120]}...",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+
+    text = (
+        f"🚨 *LENSQL AI — SECURITY INCIDENT DISPATCH*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🎥 *Source:* `{label}`\n"
+        f"⚠️ *Severity:* *{stg}* (Confidence: `{sc}`)\n"
+        f"🕒 *Timestamp:* `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}`\n\n"
+        f"📋 *Forensic Summary:*\n{summary}\n\n"
+        f"🛡️ *Verification:* `Dual-Stage Neural Consensus Engine`\n"
+        f"🔒 *Chain of Custody:* `RFC-3161 Verified`\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⚡ _Dispatched via LensQL Enterprise Hub_"
+    )
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": target_chat,
+        "text": text,
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": True,
+    }
+
+    try:
+        resp = requests.post(url, json=payload, timeout=10)
+        data = resp.json()
+        if not resp.ok or not data.get("ok"):
+            error_desc = data.get("description", "Unknown Telegram error")
+            return {
+                "status": "error",
+                "delivered": False,
+                "error": error_desc,
+                "message": f"Telegram API Error: {error_desc}",
+            }
+        return {
+            "status": "ok",
+            "delivered": True,
+            "channel": "telegram",
+            "message_id": data.get("result", {}).get("message_id"),
+            "message": f"Alert successfully dispatched to Telegram chat {target_chat}!",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "delivered": False,
+            "error": str(e),
+            "message": f"Network error contacting Telegram: {e}",
+        }
+
+
+def _auto_dispatch_severe_alerts(video_id: str, video_name: str, alerts: list):
+    """
+    Automatically notify security operations via Telegram if Stage C (Critical)
+    or high-threat alerts are detected on incoming video footage.
+    """
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if not token or not chat_id:
+        return
+
+    # Check for severe/Stage C alerts
+    severe_alerts = [
+        a for a in alerts
+        if str(a.get("alert", {}).get("stage", "")).upper() in ("C", "STAGE C", "STAGE-C")
+        or float(a.get("alert", {}).get("score", 0.0) or 0.0) >= 0.80
+    ]
+    if not severe_alerts:
+        return
+
+    top_alert = max(severe_alerts, key=lambda a: float(a.get("alert", {}).get("score", 0.0) or 0.0))
+    alert_info = top_alert.get("alert", {})
+    caption = top_alert.get("caption") or top_alert.get("event", {}).get("label", "Critical perimeter security incident")
+
+    stage = alert_info.get("stage", "Stage C")
+    score = float(alert_info.get("score", 0.88) or 0.88)
+    summary_text = f"Automated Incident Alert: {caption}. Video feed '{video_name}' has triggered {stage} classification (confidence: {score:.2f})."
+
+    print(f"[LensQL Enterprise] Auto-dispatching severe alert to Telegram chat {chat_id}...")
+    result = send_telegram_incident_alert(
+        bot_token=token,
+        chat_id=chat_id,
+        video_label=video_name,
+        stage=stage,
+        score=score,
+        summary_text=summary_text,
+    )
+    print(f"[LensQL Enterprise] Auto-dispatch result: {result.get('status')} - {result.get('message')}")
+
+
 # ─── Upload Pipeline ─────────────────────────────────────────────────────────
 
 def _cleanup(path: str):
@@ -426,6 +549,7 @@ def _process_video_direct(video_id: str, video_name: str, file_path: str):
     _cleanup(file_path)
     _jobs[video_id] = {"status": "done", "progress": 100, "error": None}
     print(f"[direct] Video '{video_name}' complete in {total_time_s:.1f}s")
+    _auto_dispatch_severe_alerts(video_id, video_name, alerts)
 
 
 def _process_video_background(video_id: str, video_name: str, file_path: str):
@@ -509,6 +633,7 @@ def _process_video_background(video_id: str, video_name: str, file_path: str):
         _cleanup(file_path)
         _jobs[video_id] = {"status": "done", "progress": 100, "error": None}
         print(f"[upload] Complete '{video_name}' via Modal in {total_time_s:.1f}s")
+        _auto_dispatch_severe_alerts(video_id, video_name, alerts)
 
     except Exception as e:
         print(f"[upload] Modal execution failed or not configured ({e}). Running direct pipeline...")
@@ -1012,76 +1137,14 @@ def dispatch_telegram_alert(req: TelegramDispatchRequest):
     Dispatch an incident notification to Telegram via the official Telegram Bot API.
     Can use user-supplied bot_token and chat_id or fall back to .env variables.
     """
-    import requests
-    from datetime import datetime
-
-    bot_token = (req.bot_token or os.environ.get("TELEGRAM_BOT_TOKEN", "")).strip()
-    chat_id = (req.chat_id or os.environ.get("TELEGRAM_CHAT_ID", "")).strip()
-
-    video_label = req.video_name or req.video_id or "Surveillance Feed"
-    stage = req.alert_stage or "Stage C"
-    score = f"{req.alert_score:.2f}" if req.alert_score else "0.85+"
-    summary_text = req.summary or "Critical physical anomaly or perimeter breach detected by LensQL AI."
-
-    # If no bot token/chat id provided, return staged verification dispatch
-    if not bot_token or not chat_id:
-        return {
-            "status": "staged",
-            "delivered": True,
-            "channel": "telegram",
-            "message": "Gateway pulse verified. Connect active Telegram Bot Token and Chat ID in settings for direct mobile push delivery.",
-            "preview_text": f"🚨 [LensQL AI Alert] {stage} detected on {video_label}: {summary_text[:120]}...",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-        }
-
-    text = (
-        f"🚨 *LENSQL AI — SECURITY INCIDENT DISPATCH*\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🎥 *Source:* `{video_label}`\n"
-        f"⚠️ *Severity:* *{stage}* (Confidence: `{score}`)\n"
-        f"🕒 *Timestamp:* `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}`\n\n"
-        f"📋 *Forensic Summary:*\n{summary_text}\n\n"
-        f"🛡️ *Verification:* `Dual-Stage Neural Consensus Engine`\n"
-        f"🔒 *Chain of Custody:* `RFC-3161 Verified`\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⚡ _Dispatched via LensQL Enterprise Hub_"
+    return send_telegram_incident_alert(
+        bot_token=req.bot_token,
+        chat_id=req.chat_id,
+        video_label=req.video_name or req.video_id or "Surveillance Feed",
+        stage=req.alert_stage or "Stage C",
+        score=req.alert_score or 0.88,
+        summary_text=req.summary or req.custom_message,
     )
-
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "Markdown",
-        "disable_web_page_preview": True,
-    }
-
-    try:
-        resp = requests.post(url, json=payload, timeout=10)
-        data = resp.json()
-        if not resp.ok or not data.get("ok"):
-            error_desc = data.get("description", "Unknown Telegram error")
-            return {
-                "status": "error",
-                "delivered": False,
-                "error": error_desc,
-                "message": f"Telegram API Error: {error_desc}",
-            }
-        
-        return {
-            "status": "ok",
-            "delivered": True,
-            "channel": "telegram",
-            "message_id": data.get("result", {}).get("message_id"),
-            "message": f"Alert successfully dispatched to Telegram chat {chat_id}!",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "delivered": False,
-            "error": str(e),
-            "message": f"Network error contacting Telegram: {e}",
-        }
 
 
 # ─── Benchmarks ───────────────────────────────────────────────────────────────
