@@ -925,7 +925,7 @@ def video_report(
                 content=pdf_bytes,
                 media_type="application/pdf",
                 headers={
-                    "Content-Disposition": f"attachment; filename=report_{video_id}.pdf",
+                    "Content-Disposition": f"attachment; filename=lensql_report_{video_id}.pdf",
                     "Cache-Control": "no-store",
                 },
             )
@@ -936,7 +936,7 @@ def video_report(
                 content=text,
                 media_type="text/plain",
                 headers={
-                    "Content-Disposition": f"attachment; filename=report_{video_id}.txt",
+                    "Content-Disposition": f"attachment; filename=lensql_report_{video_id}.txt",
                     "Cache-Control": "no-store",
                 },
             )

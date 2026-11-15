@@ -144,7 +144,7 @@ Respond ONLY with raw JSON (no markdown, no code fences):
         primary_narrative = (
             synthesis.get("summary")
             if synthesis and synthesis.get("summary") and not synthesis.get("summary").startswith("Video '")
-            else f"Automated forensic surveillance detected {len(alerts)} alerts across a {duration_s:.0f}s active incident window. "
+            else f"LensQL AI automated forensic surveillance detected {len(alerts)} alerts across a {duration_s:.0f}s active incident window. "
                  f"Key activity observed involves {', '.join(labels) or 'detected movement'} with maximum {max_people} individual(s) in frame."
         )
         report_data = {
@@ -169,7 +169,7 @@ Respond ONLY with raw JSON (no markdown, no code fences):
                 "sustained": duration_s > 60
             },
             "recommendations": [
-                "Preserve local NVR video segment and cryptographic chain-of-custody seal.",
+                "Preserve local NVR video segment and LensQL cryptographic chain-of-custody seal.",
                 "Verify suspect identification with perimeter physical security logs.",
                 "Dispatch alert documentation to designated response team."
             ]
@@ -224,21 +224,22 @@ def report_to_text(report: Dict) -> str:
         cls_ = str(cls_raw).replace("_", " ").title()
 
     lines = [
-        "=" * 70,
-        "  LENSQL AI SECURITY INCIDENT REPORT",
-        "=" * 70,
+        "=" * 72,
+        "  LENSQL AI — AUTONOMOUS SURVEILLANCE & FORENSIC INCIDENT REPORT",
+        "=" * 72,
+        f"  Platform    : LensQL AI Autonomous Security & Natural-Language Forensics",
         f"  Report ID   : {report.get('report_id', 'N/A')}",
-        f"  Video       : {report.get('video_name', '')}",
+        f"  Video Feed  : {report.get('video_name', '')}",
         f"  Generated   : {report.get('generated_at', '')}",
         f"  Severity    : {sev}",
         f"  Class       : {cls_}",
-        "=" * 70,
+        "=" * 72,
         "",
         f"TITLE: {report.get('title', 'Security Incident Report')}",
         "",
-        "─" * 70,
-        "EXECUTIVE SUMMARY",
-        "─" * 70,
+        "─" * 72,
+        "EXECUTIVE FORENSIC SUMMARY",
+        "─" * 72,
         str(report.get("executive_summary") or "No narrative summary available."),
         "",
     ]
@@ -250,9 +251,9 @@ def report_to_text(report: Dict) -> str:
         except (ValueError, TypeError):
             dur = 0.0
         lines += [
-            "─" * 70,
+            "─" * 72,
             "INCIDENT WINDOW",
-            "─" * 70,
+            "─" * 72,
             f"  Start    : {iw.get('start', 'N/A')}",
             f"  End      : {iw.get('end',   'N/A')}",
             f"  Duration : {dur:.0f}s",
@@ -262,9 +263,9 @@ def report_to_text(report: Dict) -> str:
     parties = report.get("parties")
     if isinstance(parties, dict):
         lines += [
-            "─" * 70,
+            "─" * 72,
             "PARTIES INVOLVED",
-            "─" * 70,
+            "─" * 72,
             f"  Total persons in frame : {parties.get('total_persons', '?')}",
             f"  Perpetrators (est.)    : {parties.get('perpetrators_estimated', '?')}",
             f"  Victims (est.)         : {parties.get('victims_estimated', '?')}",
@@ -274,7 +275,7 @@ def report_to_text(report: Dict) -> str:
 
     km = report.get("key_moments")
     if isinstance(km, list) and km:
-        lines += ["─" * 70, "KEY MOMENTS", "─" * 70]
+        lines += ["─" * 72, "KEY MOMENTS", "─" * 72]
         for m in km:
             if isinstance(m, dict):
                 lines.append(f"  {m.get('time','?')}  {m.get('description','')}")
@@ -284,14 +285,14 @@ def report_to_text(report: Dict) -> str:
 
     recs = report.get("recommendations")
     if isinstance(recs, list) and recs:
-        lines += ["─" * 70, "RECOMMENDATIONS", "─" * 70]
+        lines += ["─" * 72, "RECOMMENDATIONS", "─" * 72]
         for i, r in enumerate(recs, 1):
             lines.append(f"  {i}. {r}")
         lines.append("")
 
     ec = report.get("evidence_clips")
     if isinstance(ec, list) and ec:
-        lines += ["─" * 70, f"EVIDENCE CLIPS ({len(ec)} key moments selected from {report.get('total_alerts', '?')} alerts)", "─" * 70]
+        lines += ["─" * 72, f"EVIDENCE CLIPS ({len(ec)} key moments selected from {report.get('total_alerts', '?')} alerts)", "─" * 72]
         for c in ec:
             if isinstance(c, dict):
                 try:
@@ -304,20 +305,21 @@ def report_to_text(report: Dict) -> str:
     coc = report.get("chain_of_custody")
     if isinstance(coc, dict):
         lines += [
-            "─" * 70,
+            "─" * 72,
             "LEGAL CHAIN OF CUSTODY & CRYPTOGRAPHIC VERIFICATION",
-            "─" * 70,
+            "─" * 72,
             f"  Evidence SHA-256 Hash : {coc.get('sha256_evidence_hash', 'N/A')}",
             f"  Verification Standard : {coc.get('verification_standard', 'RFC-3161')}",
             f"  Integrity Status      : {coc.get('integrity_status', 'Verified')}",
             f"  Forensic Watermark    : {coc.get('forensic_watermark', 'N/A')}",
             f"  Certified Timestamp   : {coc.get('timestamp_utc', 'N/A')}",
+            "  Issuing Platform      : LensQL AI Autonomous Forensic Intelligence Core",
             "  Legal Notice          : Tamper-evident cryptographic signature for courtroom",
             "                          and insurance admissibility under digital evidence rules.",
             "",
         ]
 
-    lines += ["=" * 70, "  END OF REPORT — LensQL AI Sentinel Stream", "=" * 70]
+    lines += ["=" * 72, "  END OF REPORT — LensQL AI Sentinel Stream · Autonomous Forensics", "=" * 72]
     return "\n".join(lines)
 
 
@@ -335,20 +337,20 @@ def report_to_pdf(report: Dict) -> bytes:
     pdf.add_page()
 
     # ── Header bar ────────────────────────────────────────────────────────────
-    pdf.set_fill_color(18, 18, 28)
-    pdf.set_text_color(230, 200, 100)      # amber
-    pdf.set_font("Helvetica", "B", 13)
-    pdf.cell(0, 13, "LENSQL AI - SECURITY INCIDENT REPORT", fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_fill_color(15, 23, 42)          # slate-900
+    pdf.set_text_color(255, 255, 255)       # white
+    pdf.set_font("Helvetica", "B", 12.5)
+    pdf.cell(0, 12, "LENSQL AI - SECURITY INCIDENT FORENSIC REPORT", fill=True, align="C", new_x="LMARGIN", new_y="NEXT")
 
-    pdf.set_fill_color(30, 30, 48)
-    pdf.set_text_color(160, 160, 190)
+    pdf.set_fill_color(30, 41, 59)          # slate-800
+    pdf.set_text_color(148, 163, 184)       # slate-400
     pdf.set_font("Helvetica", "", 7.5)
     gen_at = str(report.get('generated_at') or '')[:19].replace('T', ' ')
     pdf.cell(
         0, 6,
         f"Report ID: {report.get('report_id','N/A')}   |   "
-        f"Generated: {gen_at}   |   "
-        f"LensQL AI · Security Intelligence",
+        f"Generated: {gen_at} UTC   |   "
+        f"LensQL AI · Autonomous Security & Forensic Intelligence Core",
         fill=True, align="C", new_x="LMARGIN", new_y="NEXT",
     )
     pdf.ln(3)
@@ -361,21 +363,21 @@ def report_to_pdf(report: Dict) -> bytes:
     else:
         cls_ = str(cls_raw).replace("_", " ").title()
 
-    pdf.set_text_color(40, 40, 50)
-    pdf.set_font("Helvetica", "B", 9)
-    meta_text = f"Video: {report.get('video_name','')}   |   Severity: {sev}   |   Classification: {cls_}"
+    pdf.set_text_color(30, 41, 59)
+    pdf.set_font("Helvetica", "B", 8.5)
+    meta_text = f"Video Feed: {report.get('video_name','')}   |   Severity Level: {sev}   |   Classification: {cls_}"
     meta_text = "".join(c if ord(c) < 256 else "?" for c in meta_text)
-    pdf.cell(0, 7, meta_text, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6.5, meta_text, new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
 
     # Section helper ──────────────────────────────────────────────────────────
     def _section(title: str) -> None:
-        pdf.set_fill_color(235, 235, 248)
-        pdf.set_text_color(40, 40, 90)
+        pdf.set_fill_color(241, 245, 249)    # slate-100
+        pdf.set_text_color(15, 23, 42)       # slate-900
         pdf.set_font("Helvetica", "B", 8.5)
         safe_title = "".join(c if ord(c) < 256 else "?" for c in str(title))
-        pdf.cell(0, 6.5, safe_title, fill=True, new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(0.5)
+        pdf.cell(0, 6.5, f"  {safe_title}", fill=True, new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(1)
 
     def _body(text: Any, size: float = 9) -> None:
         pdf.set_font("Helvetica", "", size)
@@ -467,10 +469,11 @@ def report_to_pdf(report: Dict) -> bytes:
         _section("LEGAL CHAIN OF CUSTODY & DIGITAL FORENSIC CERTIFICATE")
         _body(
             f"SHA-256 Evidence Hash: {coc.get('sha256_evidence_hash', 'N/A')}\n"
-            f"Verification Standard: {coc.get('verification_standard', 'RFC-3161')}\n"
-            f"Integrity Status: {coc.get('integrity_status', 'Cryptographically Sealed')}\n"
+            f"Verification Standard: {coc.get('verification_standard', 'RFC-3161 Standard')}\n"
+            f"Integrity Status: {coc.get('integrity_status', 'Cryptographically Sealed & Tamper-Evident')}\n"
             f"Forensic Watermark: {coc.get('forensic_watermark', 'N/A')}\n"
             f"Certified Timestamp: {coc.get('timestamp_utc', 'N/A')}\n"
+            f"Issuing Core: LensQL AI Autonomous Forensic Intelligence Core\n"
             f"Legal Certification: Immutable cryptographic hash generated at time of analysis. Guarantees chain of custody and evidentiary non-repudiation in judicial and insurance proceedings.",
             size=7.5,
         )
@@ -478,8 +481,8 @@ def report_to_pdf(report: Dict) -> bytes:
     # ── Footer ────────────────────────────────────────────────────────────────
     pdf.ln(4)
     pdf.set_font("Helvetica", "I", 7.5)
-    pdf.set_text_color(160, 160, 160)
-    pdf.cell(0, 5, "End of Report - LensQL AI Sentinel Stream", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 5, "Certified Digital Forensics Document - Generated by LensQL AI Sentinel Stream", align="C", new_x="LMARGIN", new_y="NEXT")
 
     return bytes(pdf.output())
 

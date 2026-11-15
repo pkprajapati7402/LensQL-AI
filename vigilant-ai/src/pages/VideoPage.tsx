@@ -159,7 +159,7 @@ export default function VideoPage() {
                                         const blobUrl = URL.createObjectURL(blob)
                                         const a = document.createElement('a')
                                         a.href = blobUrl
-                                        a.download = `incident_report_${videoId}.txt`
+                                        a.download = `lensql_incident_report_${videoId}.txt`
                                         document.body.appendChild(a)
                                         a.click()
                                         document.body.removeChild(a)
@@ -192,7 +192,7 @@ export default function VideoPage() {
                                         const blobUrl = URL.createObjectURL(blob)
                                         const a = document.createElement('a')
                                         a.href = blobUrl
-                                        a.download = `incident_report_${videoId}.pdf`
+                                        a.download = `lensql_incident_report_${videoId}.pdf`
                                         document.body.appendChild(a)
                                         a.click()
                                         document.body.removeChild(a)
