@@ -131,9 +131,22 @@ flowchart TD
 
 ---
 
-## ⚡ Deployment with Camber Cloud GPU
+## ⚡ Deployment & Infrastructure Options
 
-To avoid credit card restrictions associated with serverless providers like Modal while maintaining dedicated NVIDIA GPU acceleration (e.g., NVIDIA L4 / A100), LensQL AI is designed to run seamlessly on **Camber Cloud GPU** with secure reverse tunneling (ngrok / Cloudflare Tunnel).
+LensQL AI is designed with an infrastructure-agnostic compute architecture. You can run the neural inference and forensic consensus pipeline across your preferred environment based on budget, hardware availability, and scalability requirements:
+
+| Environment | Ideal For | GPU Setup | Setup Time | Cost |
+|---|---|---|---|---|
+| **[Option A: Camber Cloud GPU](#option-a-camber-cloud-gpu-recommended-for-production)** | Dedicated Production & 24/7 Live Monitoring | Dedicated NVIDIA L4 / A100 | ~3 mins | Pay-as-you-go |
+| **[Option B: Google Colab](#option-b-google-colab-free-zero-setup-quickstart)** | Fast Demo, Interactive Testing & Hackathons | Free NVIDIA T4 GPU | ~2 mins | Free |
+| **[Option C: Modal Serverless](#option-c-modal-serverless-gpu-auto-scaling)** | Serverless Auto-scaling & Distributed Pipelines | Serverless On-Demand A10G / T4 | ~4 mins | Usage-based |
+| **[Option D: Local / Bare Metal](#option-d-local-workstation--bare-metal)** | Air-gapped / Sovereign On-Premises | Local NVIDIA GPU (RTX 3060+) or CPU | ~5 mins | Self-hosted |
+
+---
+
+### Option A: Camber Cloud GPU (Recommended for Production)
+
+Camber Cloud provides dedicated NVIDIA GPUs (L4 / A100) with zero serverless cold starts and without aggressive credit card restrictions.
 
 ```
 ┌────────────────────────────────────────────────────────┐                 ┌─────────────────────────────┐
@@ -154,45 +167,151 @@ To avoid credit card restrictions associated with serverless providers like Moda
 └────────────────────────────────────────────────────────┘                 └─────────────────────────────┘
 ```
 
-### 1. Launching on Camber Cloud GPU
-1. Launch an on-demand GPU instance on [Camber Cloud](https://camber.cloud) (e.g., NVIDIA L4 or A100).
-2. Clone this repository and install dependencies:
+1. **Launch GPU Instance**:
+   Create an on-demand GPU instance on [Camber Cloud](https://camber.cloud) (Ubuntu 22.04 + NVIDIA Drivers).
+
+2. **Clone & Install Dependencies**:
    ```bash
    git clone https://github.com/pkprajapati7402/LensQL-AI.git
    cd LensQL-AI/backend
    pip install -r requirements.txt
    ```
-3. Set your environment variables in `backend/.env`:
+
+3. **Configure Environment Variables (`backend/.env`)**:
    ```bash
+   cp .env.example .env
+   # Add your Google Gemini API Key
    GEMINI_API_KEY=your_gemini_api_key_here
    SUPERMEMORY_API_KEY=your_supermemory_key_here # Optional
    ```
-4. Start the backend:
+
+4. **Start Backend & Tunnel**:
    ```bash
+   # Terminal 1: Run FastAPI server
    uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+   # Terminal 2: Expose secure public endpoint via Cloudflare Tunnel
+   cloudflared tunnel --url http://localhost:8000
+   # Logs will output: https://<random-subdomain>.trycloudflare.com
    ```
 
-### 2. Exposing the Backend URL (Tunneling)
-Expose the backend port via Cloudflare Tunnel (no account required) or ngrok:
-```bash
-# Using Cloudflare Tunnel
-cloudflared tunnel --url http://localhost:8000
-# Output: https://your-unique-subdomain.trycloudflare.com
+---
 
-# OR using ngrok
-ngrok http 8000
-# Output: https://your-unique-subdomain.ngrok-free.app
-```
+### Option B: Google Colab (Free Zero-Setup Quickstart)
 
-### 3. Connect the Frontend
-In `vigilant-ai/vite.config.ts` (or via environment variable `VITE_BACKEND_URL`):
-```bash
-cd ../vigilant-ai
-export VITE_BACKEND_URL=https://your-unique-subdomain.trycloudflare.com
-npm install
-npm run dev
-```
-Open `http://localhost:5173` to access the full live application.
+If you don't have a local GPU or cloud credit, you can run the entire backend on Google Colab's free NVIDIA T4 GPU instance.
+
+1. **Open Google Colab**:
+   Navigate to [Google Colab](https://colab.research.google.com) and create a **New Notebook**.
+2. **Set Hardware Accelerator**:
+   Go to **Runtime** > **Change runtime type** > Select **T4 GPU** > Save.
+3. **Execute Setup Cell in Colab**:
+   ```python
+   # 1. Clone repository
+   !git clone https://github.com/pkprajapati7402/LensQL-AI.git
+   %cd LensQL-AI/backend
+
+   # 2. Install dependencies & Cloudflare Tunnel binary
+   !pip install -r requirements.txt
+   !wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+   !dpkg -i cloudflared-linux-amd64.deb
+
+   # 3. Configure API Key
+   import os
+   os.environ["GEMINI_API_KEY"] = "your_gemini_api_key_here"
+
+   # 4. Start Cloudflare Tunnel in background
+   !nohup cloudflared tunnel --url http://127.0.0.1:8000 > tunnel.log 2>&1 &
+   !sleep 3 && grep -o "https://.*\.trycloudflare\.com" tunnel.log
+
+   # 5. Launch FastAPI backend
+   !uvicorn api.main:app --host 0.0.0.0 --port 8000
+   ```
+4. **Copy the Tunnel URL**:
+   The notebook will output a live HTTPS URL (e.g. `https://random-words.trycloudflare.com`). Use this URL to connect your frontend!
+
+---
+
+### Option C: Modal Serverless (GPU Auto-Scaling)
+
+Modal allows you to run distributed GPU workloads with automatic scaling and zero idle cost.
+
+1. **Install and Authenticate Modal**:
+   ```bash
+   pip install modal
+   modal setup
+   ```
+
+2. **Download Model Weights to Modal Persistent Volume**:
+   ```bash
+   # Downloads YOLO and CLIP weights to Modal Volume 'vigilant-model-weights'
+   modal run backend/workers/inference.py::download_models
+   ```
+
+3. **Deploy the Pipeline**:
+   ```bash
+   modal deploy backend/workers/inference.py
+   ```
+
+4. **Run Local FastAPI Backend with Modal Integration**:
+   ```bash
+   cd LensQL-AI/backend
+   export GEMINI_API_KEY=your_gemini_api_key_here
+   uvicorn api.main:app --reload --port 8000
+   ```
+   The backend will automatically route heavy video subclip extraction jobs to your distributed Modal workers.
+
+---
+
+### Option D: Local Workstation / Bare Metal
+
+For local developer machines with an NVIDIA GPU (e.g. RTX 3060 / 4070 / 4090) or running in CPU-fallback mode:
+
+1. **Install Requirements**:
+   ```bash
+   cd LensQL-AI/backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+2. **Set Environment Variables in `backend/.env`**:
+   ```bash
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+3. **Launch the Server**:
+   ```bash
+   uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+---
+
+### 🌐 Connecting the React 19 Frontend
+
+Once your backend is running (locally or through a Cloudflare/ngrok tunnel):
+
+1. **Navigate to the frontend directory**:
+   ```bash
+   cd LensQL-AI/vigilant-ai
+   npm install
+   ```
+
+2. **Configure the Backend URL**:
+   Set `VITE_BACKEND_URL` in your terminal or inside `vigilant-ai/vite.config.ts`:
+   ```bash
+   # If running backend via Cloudflare Tunnel (Colab / Camber Cloud):
+   export VITE_BACKEND_URL=https://your-unique-subdomain.trycloudflare.com
+
+   # If running backend locally on the same machine:
+   # Defaults automatically to http://localhost:8000 via proxy
+   ```
+
+3. **Start the Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173` in your browser. Alternatively, paste your tunnel URL into the **Settings** tab in the LensQL AI console anytime to re-point feeds live.
 
 ---
 
